@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hex</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            text-align: left;
+            max-width: 500px;
+        }
+        
+        .hex-code {
+            font-size: 14px;
+            margin-bottom: 40px;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+        
+        .input-section {
+            margin-top: 30px;
+        }
+        
+        input[type="text"] {
+            background-color: #000;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border: 1px solid #0f0;
+        }
+        
+        button {
+            background-color: #000;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 8px 20px;
+            font-family: monospace;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+        
+        .message {
+            margin-top: 20px;
+            font-size: 12px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hex-code">57484154 20544845 2048454c 4c204920 444f</div>
+        
+        <div class="input-section">
+            <input type="text" id="answer" placeholder="">
+            <button onclick="check()">Monster</button>
+            <div class="message" id="message"></div>
+        </div>
+    </div>
+    
+    <script>
+        function check() {
+            const answer = document.getElementById('answer').value;
+            const message = document.getElementById('message');
+            
+            if (answer === 'WHAT THE HELL I DO') {
+                message.textContent = '> acceso concedido';
+                message.style.color = '#0f0';
+            } else {
+                message.textContent = '> intenta de nuevo';
+                message.style.color = '#f00';
+            }
+        }
+        
+        document.getElementById('answer').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                check();
+            }
+        });
+    </script>
+</body>
+</html>
