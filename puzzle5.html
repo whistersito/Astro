@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E">
+<title>V</title>
+<style>
+  :root { --bg:#000; --fg:#bdbdbd; --dim:#5e5e5e; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); }
+  body { font-family:"Times New Roman", Times, serif; font-size:19px; line-height:1.7; max-width:34rem; margin:0 auto;
+         padding:7vh 1.4rem 14vh; box-sizing:border-box; overflow-x:hidden; }
+  button { all:unset; cursor:pointer; }
+  #fog { position:fixed; inset:-20%; z-index:0; pointer-events:none; opacity:.6; transition:opacity 5s;
+         background:radial-gradient(40% 30% at 30% 40%, #1b1b1b, transparent), radial-gradient(35% 35% at 75% 65%, #181818, transparent);
+         animation:drift 28s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform:translate(8%,-6%) scale(1.15); } }
+  #stage { position:relative; z-index:2; filter:grayscale(var(--g,1)); transition:filter 4s; }
+  h1 { font-size:1.6rem; font-weight:normal; margin:0 0 .4rem; }
+  #cap { color:var(--dim); font-style:italic; min-height:1.7em; margin:0 0 1rem; transition:opacity 1.2s; }
+  .sec { opacity:1; transition:opacity 1.2s; } .sec.out { opacity:0; }
+  .ln { opacity:0; transition:opacity 2.6s; margin:0 0 1.2rem; } .ln.on { opacity:1; }
+  .dim { color:var(--dim); font-style:italic; } .gold { color:#f0d9a6; }
+  #note { min-height:1.7em; color:#8a3a3a; text-align:center; margin:.4rem 0 0; }
+
+  /* the body */
+  #lab { position:relative; width:min(100%,340px); aspect-ratio:340/500; margin:0 auto; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #fig { position:absolute; inset:0; width:100%; height:100%; transform-origin:50% 40%; }
+  #fig.br { animation:br 5.2s ease-in-out infinite; } @keyframes br { 50% { transform:scale(1.02); } }
+  #fig path, #fig circle.o { fill:none; stroke:#555; stroke-width:2; stroke-linecap:round; }
+  #limbs, #eyes, #kg, #hg { opacity:0; transition:opacity 2.2s; }
+  #hg { animation:pulse 1s infinite; } @keyframes pulse { 20% { transform:scale(1.35); } }
+  .zone { position:absolute; width:54px; height:54px; margin:-27px 0 0 -27px; border:1px dashed #242424; border-radius:50%; transition:border-color .25s, box-shadow .25s; }
+  .zone.hot { border-color:#888; box-shadow:0 0 14px rgba(255,255,255,.12); }
+  .tk { position:absolute; transform:translate(-50%,-50%); padding:.3rem .8rem; border:1px solid #555; border-radius:99px; background:#000; font-size:.95rem;
+        touch-action:none; cursor:grab; z-index:5; white-space:nowrap; }
+  .tk:hover { color:#fff; border-color:#999; } .tk.drag { cursor:grabbing; color:#fff; border-color:#ddd; z-index:9; }
+  .tk.placed { border-color:transparent; color:#f0d9a6; background:transparent; pointer-events:none; font-size:.8rem; z-index:3; }
+  body.nums .tk:not(.placed)::after { content:attr(data-n); color:#8a3a3a; margin-left:.5rem; }
+  body.hit { animation:hit .5s steps(2,end); } @keyframes hit { 0%,100% { background:#000; } 30% { background:#1a0000; } }
+
+  #noise { position:fixed; inset:0; width:100%; height:100%; z-index:20; pointer-events:none; mix-blend-mode:overlay; image-rendering:pixelated; opacity:.1; }
+  #shade { position:fixed; z-index:1; pointer-events:none; border-radius:50%; left:0; top:0; background:radial-gradient(circle, rgba(var(--shc,170,170,170),.12), transparent 70%); }
+  .voice { position:fixed; z-index:15; pointer-events:none; opacity:0; }
+  #wake { position:fixed; inset:0; z-index:30; background:#000; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity 2.5s; }
+  #wake p { color:#6b6b6b; font-style:italic; margin:0; animation:blinkp 3s ease-in-out infinite; } @keyframes blinkp { 50% { opacity:.3; } }
+  #wake.off { opacity:0; pointer-events:none; }
+  body { transition:opacity 2s; }
+  /* credits */
+  #cr .row { display:flex; justify-content:space-between; gap:1rem; border-bottom:1px dotted #222; padding:.2rem 0; }
+  #cr .row span:last-child { color:#f0d9a6; }
+  .lk { color:var(--fg); text-decoration:underline; text-underline-offset:4px; }
+  @media (prefers-reduced-motion:reduce) { #fog, #fig.br, #hg { animation:none; } }
+  html { -webkit-tap-highlight-color:transparent; } body { touch-action:manipulation; }
+</style>
+</head>
+<body>
+<noscript><p style="color:#888;padding:2rem;font-family:serif">This needs JavaScript to run.</p></noscript>
+<div id="fog"></div><canvas id="noise" width="96" height="96"></canvas><div id="shade"></div>
+<div id="wake"><p id="wp">tap to wake him</p></div>
+<main id="stage">
+  <h1>V</h1>
+  <p id="cap">They are still out there. Put him back.</p>
+
+  <section id="a" class="sec">
+    <div id="lab">
+      <svg id="fig" viewBox="0 0 340 500">
+        <circle class="o" cx="170" cy="55" r="30"/>
+        <path d="M170 85 V300 M105 122 H235 M140 300 H200"/>
+        <g id="limbs"><path d="M105 122 L70 230 L60 300 M235 122 L270 230 L280 300 M150 300 L140 420 L135 480 M190 300 L200 420 L205 480"/></g>
+        <circle id="hg" cx="150" cy="190" r="14" fill="#a00" stroke="none" style="transform-box:fill-box;transform-origin:center"/>
+        <circle id="kg" cx="190" cy="250" r="12" fill="#c9a24a" stroke="none"/>
+        <g id="eyes"><ellipse cx="156" cy="52" rx="9" ry="5" fill="#000" stroke="#ddd"/><ellipse cx="184" cy="52" rx="9" ry="5" fill="#000" stroke="#ddd"/>
+          <circle id="pl" cx="156" cy="52" r="3" fill="#fff"/><circle id="pr" cx="184" cy="52" r="3" fill="#fff"/></g>
+      </svg>
+    </div>
+    <p id="note" role="status"></p>
+  </section>
+
+  <section id="b" class="sec out" hidden></section>
+  <section id="c" class="sec out" hidden>
+    <div id="cr"></div>
+    <p class="ln on" style="margin-top:2rem"><a id="again" class="lk" href="index.html">play again</a></p>
+  </section>
+</main>
+
+<script>
+  /* ===== EDIT THIS: the real ending ===== */
+  const FROM = "the one who made this";
+  const LETTER = [
+    "I made this for you, in two days, because I wanted you to have something that was only yours.",
+    "Everything dark in here was pretend. Everything you did to get through it was real.",
+    "You noticed the small things. You kept pressing when it got heavy. You came back.",
+    "If the real world ever gets heavy, you don't have to solve it like a puzzle. Just tell me. I will always listen."
+  ];
+  /* ====================================== */
+
+  const $ = id => document.getElementById(id);
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const get = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } };
+  const NAME = (() => { try { return localStorage.getItem("nlname") || "you"; } catch (e) { return "you"; } })();
+  const bump = () => { try { localStorage.setItem("nl5", get("nl5") + 1); } catch (e) {} };
+  const flash = (t, ms = 2400) => { $("note").textContent = t; setTimeout(() => { if ($("note").textContent === t) $("note").textContent = ""; }, ms); };
+  const hit = () => { document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit"); };
+  const jolt = () => { if (!calm) $("stage").animate([{ transform: "translateX(-12px)" }, { transform: "translateX(10px)" }, { transform: "none" }], { duration: 260 }); tone("sine", 120, 40, .4, .3); glitch(.7, .28); hit(); };
+  const setG = g => $("stage").style.setProperty("--g", g);
+
+  /* ---------- audio ---------- */
+  let ac, nodeG;
+  addEventListener("pointerdown", () => { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); });
+  function tone(type, f0, f1, v, dur) {
+    if (!ac) return; const n = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, n); o.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    g.gain.setValueAtTime(0, n); g.gain.linearRampToValueAtTime(v, n + .01); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+    o.connect(g); g.connect(ac.destination); o.start(n); o.stop(n + dur + .05);
+  }
+  const thump = () => { tone("sine", 60, 30, .7, .25); setTimeout(() => tone("sine", 48, 24, .45, .22), 190); };
+  function breathSnd() {                              // soft wind-like breath: in for 2s, out for 3s
+    if (!ac) return;
+    if (!nodeG) {
+      const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0); let l = 0;
+      for (let i = 0; i < len; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; }
+      const s = ac.createBufferSource(); s.buffer = buf; s.loop = true;
+      const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 600; f.Q.value = .7;
+      nodeG = ac.createGain(); nodeG.gain.value = 0; s.connect(f); f.connect(nodeG); nodeG.connect(ac.destination); s.start();
+    }
+    const n = ac.currentTime; nodeG.gain.setTargetAtTime(.35, n, .7); nodeG.gain.setTargetAtTime(0, n + 2, 1);
+  }
+
+  /* ---------- continuity: the same weather as before, slowly healing ---------- */
+  let sv = .32, svBump = 0, booted = false, fin = false, droneG, sx = innerWidth / 2, sy = innerHeight / 2, last = performance.now();
+  function glitch(v = .5, dur = .25) {
+    if (!ac) return; const n = ac.currentTime, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / len); if (i % 37 < 6) d[i] *= 3; }
+    const src = ac.createBufferSource(); src.buffer = buf; const ws = ac.createWaveShaper(), c = new Float32Array(256);
+    for (let i = 0; i < 256; i++) c[i] = Math.tanh((i / 128 - 1) * 6);
+    ws.curve = c; const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 800 + Math.random() * 2400; f.Q.value = .9;
+    const g = ac.createGain(); g.gain.value = v * .5; src.connect(f); f.connect(ws); ws.connect(g); g.connect(ac.destination); src.start(n);
+    tone("sawtooth", 140 + Math.random() * 80, 40, v * .16, dur);
+  }
+  const PADF = { heart: 130.8, lungs: 196, limbs: 164.8, kidney: 261.6, eye: 329.6 }, pads = {};
+  function padOn(id) {                                   // every piece adds a note; together they become the chord that ended the last page
+    if (!ac) return; const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine"; o.frequency.value = PADF[id]; g.gain.value = 0; g.gain.setTargetAtTime(.05, ac.currentTime, 1.5);
+    o.connect(g); g.connect(ac.destination); o.start(); pads[id] = { o, g };
+  }
+  function padOff(id) {
+    const q = pads[id]; if (!q) return; q.o.frequency.setTargetAtTime(PADF[id] * .6, ac.currentTime, .2); q.g.gain.setTargetAtTime(0, ac.currentTime, .15);
+    setTimeout(() => q.o.stop(), 900); delete pads[id];
+  }
+  const chime = () => tone("sine", 1046, 1046, .05, 1.6);
+  function boot() {
+    if (booted) return; booted = true; if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); ac.resume();
+    const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0); let l = 0;
+    for (let i = 0; i < len; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; }
+    const s = ac.createBufferSource(); s.buffer = buf; s.loop = true;
+    const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 170;
+    droneG = ac.createGain(); droneG.gain.value = 0; s.connect(f); f.connect(droneG); droneG.connect(ac.destination); s.start();
+    [261.6, 329.6, 392].forEach((fq, i) => setTimeout(() => tone("sine", fq, fq, .06, 5), i * 500));     // an echo of where the last page ended
+    $("wake").classList.add("off");
+  }
+  $("wake").addEventListener("click", boot);
+  if (get("nlcarry")) $("wp").textContent = "he is still here. tap.";
+  const nz = $("noise"), nctx = nz.getContext("2d"), img = nctx.createImageData(96, 96);
+  setInterval(() => {
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    nctx.putImageData(img, 0, 0);
+  }, 90);
+  const DARKW = ["again", "why", "tired", "heavy", "no", "quiet"], WARMW = ["stay", "here", "breathe", "again?", "home", "slowly"];
+  (function wander() {                                   // the voice from the last page, turning kind one piece at a time
+    setTimeout(() => {
+      if (!calm && booted) {
+        const warm = fin || Math.random() < next / 5, e = document.createElement("span"); e.className = "voice";
+        e.textContent = (warm ? WARMW : DARKW)[Math.floor(Math.random() * 6)];
+        e.style.color = warm ? "#c9a24a" : "#4a4a4a"; e.style.left = Math.random() * 80 + "%"; e.style.top = Math.random() * 85 + "%"; e.style.fontSize = (1 + Math.random() * 1.5) + "rem";
+        document.body.appendChild(e); if (warm) tone("sine", 523, 523, .025, 1.4); else glitch(.08 + sv * .2, .1);
+        e.animate([{ opacity: 0 }, { opacity: warm ? .5 : .2 + sv * .4 }, { opacity: 0 }], { duration: 1400 }).onfinish = () => e.remove();
+      }
+      wander();
+    }, 2800 - sv * 1500 + Math.random() * 2200);
+  })();
+
+  /* ---------- the reassembly ---------- */
+  // What was given last must return first.
+  const ORDER = ["heart", "lungs", "limbs", "kidney", "eye"];
+  const ZONES = { eye: [50, 11], lungs: [50, 27], heart: [44, 38], kidney: [56, 50], limbs: [18, 60] };
+  const BASE  = { heart: [10, 14], lungs: [88, 22], limbs: [10, 84], kidney: [90, 78], eye: [50, 95] };
+  const lab = $("lab"); let next = 0, drag = null, hb, br, lastHot = null;
+  const TK = {};
+  Object.keys(ZONES).forEach(id => {
+    const z = document.createElement("div"); z.className = "zone"; z.style.left = ZONES[id][0] + "%"; z.style.top = ZONES[id][1] + "%"; z.id = "z-" + id; lab.appendChild(z);
+  });
+  ["eye", "kidney", "limbs", "lungs", "heart"].forEach((id, i) => {
+    const el = document.createElement("div"); el.className = "tk"; el.textContent = id; el.dataset.n = ORDER.indexOf(id) + 1; lab.appendChild(el);
+    const t = TK[id] = { id, el, x: BASE[id][0], y: BASE[id][1], ph: i * 1.7, placed: false };
+    el.addEventListener("pointerdown", e => { if (t.placed) return; e.preventDefault(); drag = t; el.classList.add("drag"); el.setPointerCapture(e.pointerId); move(e); });
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+  });
+  function move(e) {
+    if (!drag) return; const r = lab.getBoundingClientRect();
+    drag.x = (e.clientX - r.left) / r.width * 100; drag.y = (e.clientY - r.top - (e.pointerType === "touch" ? 46 : 0)) / r.height * 100;
+    const z = nearest(drag); if (z && z !== lastHot) tone("sine", 880, 880, .02, .12); lastHot = z;
+    document.querySelectorAll(".zone").forEach(n => n.classList.toggle("hot", !!z && n.id === "z-" + z));
+  }
+  function nearest(t) {
+    const r = lab.getBoundingClientRect(); let best = null, bd = 56;
+    for (const id in ZONES) { const d = Math.hypot((t.x - ZONES[id][0]) / 100 * r.width, (t.y - ZONES[id][1]) / 100 * r.height); if (d < bd) { bd = d; best = id; } }
+    return best;
+  }
+  function end() {
+    if (!drag) return; const t = drag; drag = null; t.el.classList.remove("drag");
+    document.querySelectorAll(".zone").forEach(n => n.classList.remove("hot"));
+    const z = nearest(t); if (!z) return;
+    if (z !== t.id) { bump(); jolt(); flash("That is not where it goes."); return; }
+    if (t.id !== ORDER[next]) { collapse(); return; }
+    t.placed = true; t.x = ZONES[z][0]; t.y = ZONES[z][1]; t.el.classList.add("placed"); next++;
+    fx[t.id].on(); padOn(t.id); chime(); setG(.9 - .9 * next / 5); thump();
+    if (next === 5) finish();
+  }
+  function collapse() {                                // the wrong order makes the body reject everything
+    bump(); jolt(); flash(`It rejected it, ${NAME}. Everything fell apart.`, 3200);
+    ORDER.slice(0, next).forEach(id => { fx[id].off(); padOff(id); const t = TK[id]; t.placed = false; t.el.classList.remove("placed"); });
+    next = 0; setG(.9); svBump = .8;
+  }
+  const fx = {
+    heart:  { on() { $("hg").style.opacity = 1; hb = setInterval(thump, 1000); }, off() { $("hg").style.opacity = 0; clearInterval(hb); } },
+    lungs:  { on() { $("fig").classList.add("br"); breathSnd(); br = setInterval(breathSnd, 5200); }, off() { $("fig").classList.remove("br"); clearInterval(br); } },
+    limbs:  { on() { $("limbs").style.opacity = 1; }, off() { $("limbs").style.opacity = 0; } },
+    kidney: { on() { $("kg").style.opacity = 1; }, off() { $("kg").style.opacity = 0; } },
+    eye:    { on() { $("eyes").style.opacity = 1; }, off() { $("eyes").style.opacity = 0; } }
+  };
+  setTimeout(() => { if (next === 0) $("cap").textContent = "What was given last must return first."; }, 40000);
+  setTimeout(() => { if (next < 5) document.body.classList.add("nums"); }, 100000);
+
+  /* ---------- the end of the dream, then the truth ---------- */
+  function go(from, to, cb) { $(from).classList.add("out"); setTimeout(() => { $(from).hidden = true; $(to).hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => $(to).classList.remove("out"))); cb && cb(); }, 1300); }
+  function finish() {
+    fin = true; svBump = 0; document.documentElement.style.setProperty("--shc", "240,217,166");
+    $("cap").textContent = "";
+    setTimeout(() => { $("cap").textContent = "He is looking at you."; }, 2500);
+    setTimeout(() => { $("cap").textContent = "Thank you."; [261.6, 329.6, 392, 523.2].forEach((f, i) => setTimeout(() => tone("sine", f, f, .09, 7), i * 600)); }, 6000);
+    setTimeout(() => {                      // not the end: the dream hands him over to the next door
+      $("cap").textContent = ""; try { localStorage.setItem("nlcarry", "1"); } catch (e) {}
+      document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle6.html", 2100);
+    }, 11000);
+  }
+  function reveal() {
+    $("cap").textContent = "";
+    const lines = [["Thank you for putting me back, " + NAME + ".", ""], ["I should tell you the truth.", ""], ["My name isn't X.", ""],
+      ...LETTER.map(t => [t, ""]), ["- " + FROM, "gold dim"]];
+    const total = [...Array(0)];
+    lines.forEach(([t, c], i) => {
+      const p = document.createElement("p"); p.className = "ln " + c; p.textContent = t; $("b").appendChild(p);
+      setTimeout(() => p.classList.add("on"), 800 + i * 3600);
+    });
+    setTimeout(() => go("b", "c", credits), 800 + lines.length * 3600 + 5000);
+  }
+  function credits() {
+    const f = [get("nl1"), get("nl2"), get("nl3"), get("nl4"), get("nl5")], tot = f.reduce((a, b) => a + b, 0);
+    const names = ["I \u00B7 The Longest Dream", "II \u00B7 The Wind", "III \u00B7 The Lock", "IV \u00B7 The Voice", "V \u00B7 The Return"];
+    let mins = 0; try { const s = +localStorage.getItem("nlstart"); if (s) mins = Math.max(1, Math.round((Date.now() - s) / 60000)); } catch (e) {}
+    const rows = names.map((n, i) => `<div class="row"><span>${n}</span><span>${f[i]} mistake${f[i] === 1 ? "" : "s"}</span></div>`);
+    rows.push(`<div class="row"><span>Time inside</span><span>${mins ? (mins >= 60 ? Math.floor(mins / 60) + " h " + (mins % 60) + " min" : mins + " min") : "unknown"}</span></div>`);
+    $("cr").innerHTML = `<p class="gold">Nothing Left</p>${rows.join("")}
+      <p style="margin-top:1.6rem">${tot === 0 ? "You never fell once. I don't believe you." : `${tot} mistake${tot === 1 ? "" : "s"}, and you never stopped.`}</p>
+      <p class="dim">Made for ${NAME}.</p>`;
+    $("cap").textContent = "";
+  }
+  $("again").addEventListener("click", () => { try { ["nl1", "nl2", "nl3", "nl4", "nl5", "nlstart", "nlname"].forEach(k => localStorage.removeItem(k)); } catch (e) {} });
+
+  /* ---------- loop: tokens drift like they are underwater; his eyes follow you ---------- */
+  let mx = innerWidth / 2, my = innerHeight / 2;
+  addEventListener("pointermove", e => { mx = e.clientX; my = e.clientY; });
+  setG(.9); setTimeout(() => document.body.style.opacity = 1, 50); document.body.style.opacity = 0;
+  function frame(now) {
+    const t = now / 1000, dt = Math.min(.05, (now - last) / 1000); last = now;
+    svBump = Math.max(0, svBump - dt * .07); sv = fin ? 0 : Math.max(0, .32 * (1 - next / 5) + svBump);
+    $("noise").style.opacity = .03 + sv * .4; if (droneG) droneG.gain.setTargetAtTime(sv * .5, ac.currentTime, .5);
+    sx += (mx - sx) * .035; sy += (my - sy) * .035; const sz = 130 + sv * 260;
+    $("shade").style.width = $("shade").style.height = sz + "px"; $("shade").style.transform = `translate(${sx - sz / 2}px,${sy - sz / 2}px)`;
+    Object.values(TK).forEach(k => {
+      if (k.placed) { k.x = ZONES[k.id][0]; k.y = ZONES[k.id][1]; }
+      else if (!drag || drag !== k) {
+        const tx = BASE[k.id][0] + (calm ? 0 : Math.sin(t * .6 + k.ph) * 4), ty = BASE[k.id][1] + (calm ? 0 : Math.cos(t * .5 + k.ph) * 3);
+        k.x += (tx - k.x) * .05; k.y += (ty - k.y) * .05;
+      }
+      k.el.style.left = k.x + "%"; k.el.style.top = k.y + "%";
+    });
+    const r = lab.getBoundingClientRect(), ex = r.left + r.width * .5, ey = r.top + r.height * .105;
+    const a = Math.atan2(my - ey, mx - ex), d = Math.min(4, Math.hypot(mx - ex, my - ey) / 60);
+    [["pl", 156], ["pr", 184]].forEach(([id, cx]) => { $(id).setAttribute("cx", cx + Math.cos(a) * d); $(id).setAttribute("cy", 52 + Math.sin(a) * d * .6); });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

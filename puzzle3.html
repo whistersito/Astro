@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E">
 <title>III</title>
 <style>
   :root { --bg:#000; --fg:#cfcfcf; --dim:#6b6b6b; --red:#8a0000; }
@@ -28,22 +30,37 @@
 
   /* the padlock */
   #lockbox { transition:opacity 2s; }
-  #lock { width:250px; margin:0 auto; }
-  #shackle { width:130px; height:96px; margin:0 auto -2px; border:13px solid #6a6a6a; border-bottom:0; border-radius:65px 65px 0 0; transition:transform .8s; }
-  #lock.open #shackle { transform:translateY(-34px); }
-  #lbody { background:#161616; border:2px solid #4a4a4a; border-radius:10px; padding:14px 10px; display:flex; justify-content:center; gap:10px; }
-  #lock.shake { animation:shk .4s; } @keyframes shk { 25% { transform:translateX(-9px); } 75% { transform:translateX(9px); } }
+  #lock { width:270px; margin:0 auto; position:relative; }
+  #shackle { width:156px; height:104px; margin:0 auto -8px; position:relative; z-index:0; transform-origin:26px 100px;
+             transition:transform 1s cubic-bezier(.3,1.5,.5,1); }
+  #shackle svg { width:100%; height:100%; display:block; filter:drop-shadow(0 4px 5px #000); }
+  #lock.open #shackle { transform:translateY(-28px) rotate(-24deg); }
+  #lbody { position:relative; z-index:1; display:flex; justify-content:center; gap:10px; padding:18px 12px 30px;
+           background:linear-gradient(165deg,#444 0%,#1b1b1b 38%,#101010 62%,#2c2c2c 100%);
+           border:1px solid #6a6a6a; border-radius:14px;
+           box-shadow:inset 0 1px 0 #888, inset 0 -8px 14px #000, 0 14px 30px #000; }
+  #lbody::before, #lbody::after { content:""; position:absolute; top:8px; width:6px; height:6px; border-radius:50%;
+           background:radial-gradient(circle at 35% 30%, #999, #333); box-shadow:0 1px 1px #000; }
+  #lbody::before { left:9px; } #lbody::after { right:9px; }
+  #kh { position:absolute; left:50%; bottom:9px; width:11px; height:11px; margin-left:-5px; border-radius:50%; background:#000; box-shadow:0 0 0 2px #3a3a3a; }
+  #kh::after { content:""; position:absolute; left:4px; top:9px; width:3px; height:7px; background:#000; }
+  #lock.shake { animation:shk .45s; } @keyframes shk { 20% { transform:translateX(-10px) rotate(-1.5deg); } 60% { transform:translateX(9px) rotate(1deg); } }
   .wh { display:flex; flex-direction:column; align-items:center; }
-  .wh button { color:#777; padding:4px 10px; font-size:.9rem; } .wh button:hover { color:#fff; }
-  .wh div { width:40px; height:54px; line-height:54px; text-align:center; font-size:1.9rem; background:#000; border:1px solid #444; }
-  #try { display:block; margin:1.2rem auto 0; text-decoration:underline; text-underline-offset:4px; }
+  .wh button { color:#8a8a8a; padding:5px 10px; font-size:.85rem; } .wh button:hover { color:#fff; }
+  .wh div { width:42px; height:58px; line-height:58px; text-align:center; font-size:2rem; color:#e6dcc0; touch-action:none; cursor:ns-resize;
+            user-select:none; background:linear-gradient(#000 0%,#1d1912 50%,#000 100%); border:1px solid #585858;
+            box-shadow:inset 0 0 9px #000; text-shadow:0 0 8px rgba(230,220,190,.35); }
+  #try { display:block; margin:1.3rem auto 0; text-decoration:underline; text-underline-offset:4px; }
   #notes { margin-top:1.6rem; text-align:center; letter-spacing:.7em; font-size:1.3rem; }
   #notes b { font-weight:normal; color:#333; } #notes b.on { color:#d8d0bc; text-shadow:0 0 10px #600; }
 
   /* something small, in the corner, that keeps looking */
-  #eye { position:fixed; right:1.3rem; bottom:1.3rem; width:34px; height:34px; display:flex; align-items:center; justify-content:center;
-         color:#fff; font-size:1.4rem; opacity:.1; animation:look 5s ease-in-out infinite; z-index:2; }
-  @keyframes look { 50% { opacity:.5; } }
+  #eye { position:fixed; right:1.1rem; bottom:1.1rem; width:60px; height:60px; display:flex; align-items:center; justify-content:center;
+         color:#bbb; opacity:.4; animation:look 3.4s ease-in-out infinite; z-index:2; filter:drop-shadow(0 0 6px rgba(200,0,0,.55)); }
+  #eye svg { width:44px; height:44px; }
+  #eye .pupil { animation:glance 6s ease-in-out infinite; }
+  @keyframes glance { 0%,100% { transform:translateX(0); } 35% { transform:translateX(-4px); } 70% { transform:translateX(4px); } }
+  @keyframes look { 50% { opacity:1; } }
 
   #hint { min-height:1.7em; margin:1.6rem 0 0; transition:opacity 2s; }
   #after p { margin:0 0 1.2rem; opacity:0; transition:opacity 2.5s; } #after p.on { opacity:1; }
@@ -66,10 +83,12 @@
   #again { display:block; margin:.8rem auto 0; color:var(--dim); text-decoration:underline; text-underline-offset:4px; }
 
   body.hit { animation:hit .6s steps(2,end); } @keyframes hit { 0%,100%{background:#000} 30%{background:#1a0000} }
-  @media (prefers-reduced-motion:reduce) { .fade, #cur::before, #eye, #heart.p, body.hit, #lock.shake { animation:none; opacity:1; } #eye { opacity:.3; } }
+  @media (prefers-reduced-motion:reduce) { .fade, #cur::before, #eye, #eye .pupil, #heart.p, body.hit, #lock.shake { animation:none; opacity:1; } }
+  html { -webkit-tap-highlight-color:transparent; } body { touch-action:manipulation; }
 </style>
 </head>
 <body>
+<noscript><p style="color:#888;padding:2rem;font-family:serif">This needs JavaScript to run.</p></noscript>
 <h1 class="fade">III</h1>
 <p id="cap">Everything he had left is still in this room.</p>
 
@@ -79,7 +98,7 @@
 <input id="inp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="your answer">
 
 <div id="lockbox">
-  <div id="lock"><div id="shackle"></div><div id="lbody"></div></div>
+  <div id="lock"><div id="shackle"><svg viewBox="0 0 156 104" fill="none"><defs><linearGradient id="mt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bdbdbd"/><stop offset=".5" stop-color="#5c5c5c"/><stop offset="1" stop-color="#9a9a9a"/></linearGradient></defs><path d="M26 104 V54 a52 52 0 0 1 104 0 V104" stroke="url(#mt)" stroke-width="15" stroke-linecap="butt"/></svg></div><div id="lbody"><i id="kh"></i></div></div>
   <button id="try">open</button>
   <p id="lmsg" class="red" style="text-align:center"></p>
   <div id="notes" aria-label="what he found"><b>_</b><b>_</b><b>_</b><b>_</b></div>
@@ -92,7 +111,7 @@
   <p><a id="go" href="puzzle4.html">continue</a></p>
 </div>
 
-<button id="eye" aria-label="">&#9679;</button>
+<button id="eye" aria-label=""><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 24 C12 10 36 10 45 24 C36 38 12 38 3 24 Z"/><circle class="pupil" cx="24" cy="24" r="7" fill="currentColor" stroke="none"/></svg></button>
 
 <div id="ov" class="ov" hidden><div>
   <button id="ret">return</button>
@@ -190,24 +209,31 @@
   }
 
   /* ---------- the padlock ---------- */
-  const wheels = [0, 0, 0, 0];
+  const wheels = [0, 0, 0, 0], buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
   CODE.forEach((_, i) => {
     const w = document.createElement("div"); w.className = "wh";
     const up = document.createElement("button"), dn = document.createElement("button"), d = document.createElement("div");
     up.textContent = "\u25B2"; dn.textContent = "\u25BC"; d.textContent = "0";
-    const set = k => { if (unlocked) return; wheels[i] = (wheels[i] + k + 10) % 10; d.textContent = wheels[i]; click(); };
+    const set = k => {
+      if (unlocked) return; wheels[i] = (wheels[i] + k + 10) % 10; d.textContent = wheels[i]; click(); buzz(8);
+      if (!calm) d.animate([{ transform: `translateY(${-9 * k}px)`, opacity: .2 }, { transform: "none", opacity: 1 }], { duration: 130 });
+    };
     up.onclick = () => set(1); dn.onclick = () => set(-1);
+    let sy = null;                                        // swipe the numbers like a real wheel
+    d.addEventListener("pointerdown", e => { sy = e.clientY; d.setPointerCapture(e.pointerId); });
+    d.addEventListener("pointermove", e => { if (sy === null) return; if (Math.abs(e.clientY - sy) >= 18) { set(e.clientY < sy ? 1 : -1); sy = e.clientY; } });
+    d.addEventListener("pointerup", () => sy = null); d.addEventListener("pointercancel", () => sy = null);
     w.append(up, d, dn); $("lbody").appendChild(w);
   });
   $("try").addEventListener("click", () => {
     if (unlocked) return;
     if (wheels.join("") === CODE.join("")) {
-      unlocked = true; $("lock").classList.add("open"); click(); setTimeout(() => tone("square", 600, 200, .15, .15), 300);
+      unlocked = true; $("lock").classList.add("open"); click(); buzz([30, 40, 70]); setTimeout(() => tone("square", 600, 200, .15, .15), 300);
       $("lmsg").textContent = ""; $("hint").textContent = "";
       setTimeout(() => { $("lockbox").style.opacity = 0; $("eye").style.display = "none"; $("cap").style.opacity = 0; }, 2200);
       setTimeout(() => { $("lockbox").style.display = "none"; $("cap").textContent = "He waited for you to finish the sentence."; $("cap").style.opacity = 1; startFinal(); }, 4400);
     } else {
-      bump(); hit(); flash($("lmsg"), "No.", 1800);
+      bump(); hit(); buzz([60, 40, 60]); flash($("lmsg"), "No.", 1800);
       $("lock").classList.remove("shake"); void $("lock").offsetWidth; $("lock").classList.add("shake");
     }
   });
@@ -251,7 +277,7 @@
   }
 
   /* ---------- quiet hints, only if she has not found the way in ---------- */
-  setTimeout(() => { if (!seenEye && !unlocked) hint.textContent = "He is still looking at you."; }, 35000);
+  setTimeout(() => { if (!seenEye && !unlocked) hint.textContent = "He is still looking at you."; }, 20000);
   setTimeout(() => { if (!seenHeart && !unlocked) hint.textContent = "Something in here is still beating."; }, 80000);
 
   /* ---------- loop: the flickering light ---------- */

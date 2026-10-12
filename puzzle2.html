@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E">
 <title>II</title>
 <style>
   :root { --bg:#000; --fg:#cfcfcf; --dim:#6b6b6b; --red:#8a0000; }
@@ -46,9 +48,11 @@
     .fade { animation-duration:.01s; animation-delay:0s !important; }
     body.gust main { animation:none; }
   }
+  html { -webkit-tap-highlight-color:transparent; } body { touch-action:manipulation; }
 </style>
 </head>
 <body>
+<noscript><p style="color:#888;padding:2rem;font-family:serif">This needs JavaScript to run.</p></noscript>
 <canvas id="dust"></canvas>
 <main>
   <h1 class="fade">II</h1>

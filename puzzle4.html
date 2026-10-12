@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E">
+<title>IV</title>
+<style>
+  :root { --bg:#000; --fg:#bdbdbd; --dim:#5e5e5e; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); }
+  body { font-family:"Times New Roman", Times, serif; font-size:19px; line-height:1.7; max-width:34rem; margin:0 auto;
+         padding:9vh 1.4rem 14vh; box-sizing:border-box; overflow-x:hidden; }
+  button { all:unset; cursor:pointer; }
+  #noise { position:fixed; inset:0; width:100%; height:100%; z-index:20; pointer-events:none; mix-blend-mode:overlay; image-rendering:pixelated; opacity:.1; }
+  #fog { position:fixed; inset:-20%; z-index:0; pointer-events:none; opacity:.55; transition:opacity 4s;
+         background:radial-gradient(40% 30% at 30% 40%, #1b1b1b, transparent), radial-gradient(35% 35% at 75% 65%, #181818, transparent);
+         animation:drift 28s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform:translate(8%, -6%) scale(1.15); } }
+  .voice { position:fixed; z-index:15; pointer-events:none; color:#4a4a4a; opacity:0; }
+
+  #stage { position:relative; z-index:2; filter:grayscale(var(--g,1)) blur(var(--b,.7px)); transition:filter 4s; }
+  h1 { font-size:1.6rem; font-weight:normal; margin:0 0 .5rem; }
+  #cap { color:var(--dim); font-style:italic; min-height:1.7em; margin:0 0 1.8rem; }
+  .sec { opacity:1; transition:opacity 1s; } .sec.out { opacity:0; }
+  .dim { color:var(--dim); font-style:italic; }
+  .ln { opacity:0; transition:opacity 2.4s; margin:0 0 1.1rem; } .ln.on { opacity:1; }
+  .go { text-decoration:underline; text-underline-offset:4px; color:var(--fg); display:inline-block; margin-top:1rem; opacity:0; transition:opacity 2s; }
+  .go.on { opacity:1; }
+  #say { margin-top:2.4rem; color:var(--dim); font-style:italic; }
+  #say p { margin:0 0 .7rem; animation:fi 3s both; } @keyframes fi { from { opacity:0; } }
+  #note { min-height:1.7em; color:#8a3a3a; margin:.6rem 0 0; }
+
+  /* 1: thoughts */
+  #cards button { display:block; width:100%; box-sizing:border-box; padding:.55rem 0 .55rem 1rem; margin:0 0 .35rem; border-left:1px solid #262626;
+                  transition:opacity 1.6s, color 1.6s, transform .3s; }
+  #cards button:hover { color:#fff; }
+  #cards button.gone { opacity:0; pointer-events:none; transform:translateX(-14px); }
+  #cards button.mine { color:#fff; border-left-color:#aaa; }
+  #cards button.bright { color:#fff; border-left-color:#fff; }
+  #count { margin:1rem 0 0; }
+
+  /* 2: weight */
+  #field { position:relative; height:min(52vh,420px); overflow:hidden; border:1px solid #181818; }
+  #bar { position:absolute; left:14px; top:14px; bottom:14px; width:8px; border:1px solid #333; }
+  #bar i { position:absolute; left:0; right:0; bottom:0; height:0; background:#8a8a8a; }
+  #up { position:absolute; left:50%; bottom:22px; margin-left:-85px; width:170px; text-align:center; padding:1rem 0; border:1px solid #555; font-size:1.2rem; touch-action:manipulation; user-select:none; }
+  #up:active { background:#151515; }
+  .lie { position:absolute; color:#6a6a6a; font-style:italic; padding:6px 8px; border-bottom:1px dotted #444; animation:float 3.2s linear forwards; }
+  @keyframes float { from { opacity:0; transform:translateX(-24px); } 15% { opacity:1; } to { opacity:0; transform:translateX(70px); } }
+
+  /* 3: breath */
+  #rw { position:relative; width:230px; height:230px; margin:1rem auto; }
+  #rw div { position:absolute; inset:0; border-radius:50%; }
+  #guide { border:1px dashed #2c2c2c; }
+  #ring { border:2px solid #9a9a9a; transform:scale(.3); box-shadow:0 0 30px rgba(150,150,150,.12); }
+  #cnt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:3.2rem; font-weight:normal; color:#9a9a9a; }
+  #bst { text-align:center; min-height:1.7em; margin:0; font-size:1.3rem; }
+  #breathe { display:block; margin:1.2rem auto 0; width:170px; text-align:center; padding:1rem 0; border:1px solid #555; touch-action:none; user-select:none; }
+  #dots { text-align:center; letter-spacing:.5em; color:#aaa; margin:.8rem 0 0; }
+
+  /* 4: tell */
+  #shout { min-height:5rem; font-size:2rem; text-align:center; color:#444; margin:2.5rem 0 2rem; }
+  #tell { display:block; margin:0 auto; width:230px; text-align:center; padding:1.1rem 0; border:1px solid #666; font-size:1.2rem; touch-action:none; user-select:none; }
+  #prog { width:230px; height:3px; background:#1a1a1a; margin:1rem auto 0; } #prog i { display:block; height:100%; width:0; background:#ddd; }
+
+  /* the end: color returns */
+  #shade { position:fixed; z-index:1; pointer-events:none; border-radius:50%; left:0; top:0;
+           background:radial-gradient(circle, rgba(170,170,170,.11), transparent 70%); }
+  #nm { all:unset; border-bottom:1px solid #555; width:9rem; margin-left:.6rem; color:#fff; text-align:center; }
+  #cards button u { text-decoration:underline wavy #6a3a3a; text-underline-offset:5px; }
+  body.hit { animation:hit .5s steps(2,end); } @keyframes hit { 0%,100% { background:#000; } 30% { background:#1a0000; } }
+  #end p { opacity:0; transition:opacity 3s; margin:0 0 1.2rem; } #end p.on { opacity:1; }
+  body.warm #end .w { color:#f0d9a6; }
+  @media (prefers-reduced-motion:reduce) { #fog { animation:none; } .lie { animation-duration:3.2s; } }
+  html { -webkit-tap-highlight-color:transparent; } body { touch-action:manipulation; }
+</style>
+</head>
+<body>
+<noscript><p style="color:#888;padding:2rem;font-family:serif">This needs JavaScript to run.</p></noscript>
+<div id="fog"></div><div id="shade"></div><canvas id="noise" width="96" height="96"></canvas>
+
+<main id="stage">
+  <h1>IV</h1>
+  <p id="cap"></p>
+
+  <section id="intro" class="sec">
+    <p class="ln">The dream was never about her.</p>
+    <p class="ln">She was only the name I gave it.</p>
+    <p class="ln">It smiled. It said thank you. And every day it took a little more.</p>
+    <p class="ln">I know someone is reading this. Your thumb is probably on the glass right now.</p>
+    <p class="ln" id="timeln"></p>
+    <p class="ln">Who is reading this? <input id="nm" maxlength="20" autocomplete="off" aria-label="your name"></p>
+    <button id="begin" class="go">continue</button>
+  </section>
+
+  <section id="p1" class="sec out" hidden><div id="cards"></div><p id="count" class="dim"></p></section>
+
+  <section id="p2" class="sec out" hidden>
+    <div id="field"><div id="bar"><i></i></div><button id="up">get up</button></div>
+  </section>
+
+  <section id="p3" class="sec out" hidden>
+    <div id="rw"><div id="guide"></div><div id="ring"></div><b id="cnt"></b></div>
+    <p id="bst"></p><div id="dots">&middot; &middot; &middot;</div>
+    <button id="breathe">hold</button>
+  </section>
+
+  <section id="p4" class="sec out" hidden>
+    <p id="shout"></p>
+    <button id="tell">tell someone</button><div id="prog"><i></i></div>
+  </section>
+
+  <section id="end" class="sec out" hidden>
+    <p class="w">I told someone.</p>
+    <p>It did not fix everything. It made the room bigger.</p>
+    <p>It only ever needed what I had. I gave it piece after piece, and I called that love.</p>
+    <p>The dream is still long. I am not walking through it alone anymore.</p>
+    <p class="w dim">- X</p>
+    <p id="tally" class="w"></p>
+    <p id="thanks" class="w"></p>
+    <p class="dim">If any of this sounded familiar, tell someone you trust today: a friend, family, a teacher, a doctor. Asking is allowed. If you are ever in danger, call your local emergency number.</p>
+    <p><a id="endgo" href="puzzle5.html" style="color:#bdbdbd;text-decoration:underline;text-underline-offset:4px">continue</a></p>
+  </section>
+
+  <p id="note" role="status"></p>
+  <div id="say"></div>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rnd = a => a[Math.floor(Math.random() * a.length)];
+  let NAME = "you";
+  const _d = new Date(), CLOCK = _d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), LATE = _d.getHours() >= 23 || _d.getHours() < 5;
+  $("timeln").textContent = `It is ${CLOCK} where you are.` + (LATE ? " You should be asleep." : "");
+  const bump = () => { try { localStorage.setItem("nl4", (+localStorage.getItem("nl4") || 0) + 1); } catch (e) {} };
+  const flash = (t, ms = 2200) => { $("note").textContent = t; setTimeout(() => { if ($("note").textContent === t) $("note").textContent = ""; }, ms); };
+  const jolt = () => {
+    if (!calm) $("stage").animate([{ transform: "translateX(-12px)" }, { transform: "translateX(10px)" }, { transform: "translateX(-4px)" }, { transform: "none" }], { duration: 280 });
+    tone("sine", 120, 40, .4, .3); glitch(.7, .28); document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit");
+  };
+  const say = t => { const p = document.createElement("p"); p.textContent = t; $("say").appendChild(p); };
+
+  /* ---------- the weather inside: static, drone, intrusive words ---------- */
+  let svBase = .22, svBump = 0, sv = .22, p4prog = 0, ac, droneG;
+  const nz = $("noise"), nctx = nz.getContext("2d"), img = nctx.createImageData(96, 96);
+  setInterval(() => {
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    nctx.putImageData(img, 0, 0);
+  }, 90);
+  const VOICE = ["again", "why", "tired", "heavy", "no", "stay down", "quiet", "later", "still here?"];
+  (function wander() {
+    setTimeout(() => {
+      if (!calm && sv > .05) {
+        const e = document.createElement("span"); e.className = "voice"; e.textContent = rnd(VOICE);
+        e.style.left = Math.random() * 80 + "%"; e.style.top = Math.random() * 85 + "%"; e.style.fontSize = (1 + Math.random() * 1.6) + "rem";
+        if (ac) glitch(.1 + sv * .25, .12);
+        document.body.appendChild(e);
+        e.animate([{ opacity: 0 }, { opacity: .2 + sv * .45 }, { opacity: 0 }], { duration: 1100 }).onfinish = () => e.remove();
+      }
+      wander();
+    }, 2600 - sv * 1900 + Math.random() * 2000);
+  })();
+  document.addEventListener("visibilitychange", () => {            // it notices when you leave
+    if (document.hidden) { document.title = "don't go"; return; }
+    document.title = "IV";
+    if (cur !== "intro") { flash(`You left. I counted, ${NAME}. It's okay. People leave. Come back.`, 5000); svBump = Math.min(.7, svBump + .2); thud(); }
+  });
+  let mx = innerWidth / 2, my = innerHeight / 2, sx = mx, sy = my;
+  addEventListener("pointermove", e => { mx = e.clientX; my = e.clientY; });
+  function startAudio() {
+    if (ac) return; ac = new (window.AudioContext || window.webkitAudioContext)();
+    const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0); let last = 0;
+    for (let i = 0; i < len; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 170;
+    droneG = ac.createGain(); droneG.gain.value = 0; src.connect(f); f.connect(droneG); droneG.connect(ac.destination); src.start();
+  }
+  function tone(type, f0, f1, v, dur) {
+    if (!ac) return; const n = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, n); o.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    g.gain.setValueAtTime(0, n); g.gain.linearRampToValueAtTime(v, n + .01); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+    o.connect(g); g.connect(ac.destination); o.start(n); o.stop(n + dur + .05);
+  }
+  function glitch(v = .5, dur = .25) {                 // crackle + crushed growl: the sound of the screen tearing
+    if (!ac) return; const n = ac.currentTime, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / len); if (i % 37 < 6) d[i] *= 3; }
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const ws = ac.createWaveShaper(), c = new Float32Array(256); for (let i = 0; i < 256; i++) c[i] = Math.tanh((i / 128 - 1) * 6); ws.curve = c;
+    const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 800 + Math.random() * 2400; f.Q.value = .9;
+    const g = ac.createGain(); g.gain.value = v * .5; src.connect(f); f.connect(ws); ws.connect(g); g.connect(ac.destination); src.start(n);
+    tone("sawtooth", 140 + Math.random() * 80, 40, v * .16, dur);
+  }
+  let hOsc, hG;
+  function holdFx(on) {                                 // a growl that climbs while you hold the button
+    if (!ac) return;
+    if (on && !hOsc) {
+      hOsc = ac.createOscillator(); hOsc.type = "sawtooth"; hG = ac.createGain(); hG.gain.value = 0;
+      const ws = ac.createWaveShaper(), c = new Float32Array(256); for (let i = 0; i < 256; i++) c[i] = Math.tanh((i / 128 - 1) * 5); ws.curve = c;
+      hOsc.connect(ws); ws.connect(hG); hG.connect(ac.destination); hOsc.start();
+    }
+    if (!on && hOsc) { hG.gain.setTargetAtTime(0, ac.currentTime, .05); const o = hOsc; hOsc = null; setTimeout(() => o.stop(), 300); }
+  }
+  const thud = () => tone("sine", 70, 35, .5, .18);
+
+  /* ---------- stages ---------- */
+  let cur = "intro";
+  const LV = [[1, .8], [.75, .6], [.5, .45], [.25, .25], [0, 0]];
+  function setLevel(i) { $("stage").style.setProperty("--g", LV[i][0]); $("stage").style.setProperty("--b", LV[i][1] + "px"); }
+  function go(id, cap, lvl) {
+    const prev = $(cur), next = $(id); prev.classList.add("out"); setTimeout(() => prev.hidden = true, 1000);
+    setTimeout(() => {
+      cur = id; next.hidden = false; $("cap").textContent = cap || ""; if (lvl !== undefined) setLevel(lvl);
+      requestAnimationFrame(() => requestAnimationFrame(() => next.classList.remove("out"))); (enter[id] || (() => {}))();
+    }, 1100);
+  }
+  const IL = [...document.querySelectorAll("#intro .ln")];
+  IL.forEach((p, i) => setTimeout(() => p.classList.add("on"), 800 + i * 2300));
+  setTimeout(() => $("begin").classList.add("on"), 800 + IL.length * 2300);
+  $("begin").addEventListener("click", () => {
+    NAME = $("nm").value.trim().slice(0, 20) || "you"; try { localStorage.setItem("nlname", NAME); } catch (e) {} startAudio();
+    go("p1", "It never says \u201Csometimes\u201D.");
+  });
+
+  /* ---------- 1: the voice. Silence what lies. ---------- */
+  const LIES = ["You always ruin everything.", "Nobody would notice.", "It will never get better.", "Everyone is tired of you.", "Nothing you do matters.",
+                "It will be like this forever.", "You are always alone.", "Nobody understands you.", "You never do anything right."];
+  const TRUE = ["Some days are heavy.", "Feelings change.", "Asking for help is allowed."];
+  let silenced = 0, strikes1 = 0, p1done = false;
+  const CARDS = [];
+  const upd = () => $("count").textContent = `${silenced} / ${LIES.length}     ` + "\u25AE".repeat(strikes1) + "\u25AF".repeat(3 - strikes1);
+  [...LIES.map(t => [t, 1]), ...TRUE.map(t => [t, 0])].sort(() => Math.random() - .5).forEach(([t, lie]) => {
+    const b = document.createElement("button"); b.textContent = t; b.dataset.lie = lie; CARDS.push(b);
+    b.addEventListener("click", () => {
+      if (cur !== "p1" || b.dataset.s) return; b.dataset.s = 1;
+      if (lie === 1 || lie === "1") { b.classList.add("gone"); tone("sine", 220, 110, .15, .5); silenced++; upd(); if (silenced === LIES.length) done1(); }
+      else { b.classList.add("mine"); strike1(); }
+    });
+    $("cards").appendChild(b);
+  });
+  function strike1() {                       // a wrong answer costs you: a lie crawls back, and three strikes start it over
+    bump(); jolt(); svBump = Math.min(.8, svBump + .25); strikes1++;
+    const gone = CARDS.filter(c => c.classList.contains("gone"));
+    if (gone.length) { const r = rnd(gone); r.classList.remove("gone"); delete r.dataset.s; silenced--; flash("That one was yours. And it crawled back."); }
+    else flash("That one was yours.");
+    upd();
+    if (strikes1 >= 3) {
+      strikes1 = 0; silenced = 0; CARDS.forEach(c => { c.classList.remove("gone", "mine"); delete c.dataset.s; });
+      svBump = .8; upd(); flash(`It started over, ${NAME}. Slower this time.`, 4000);
+    }
+  }
+  function enterP1() {
+    upd();
+    setTimeout(() => { if (!p1done) $("cap").textContent = "It leaves no room for anything else."; }, 18000);
+    setTimeout(() => { if (p1done) return; $("cap").textContent = "Look at the words it cannot help using.";
+      CARDS.forEach(c => { if (c.dataset.lie === "1") c.innerHTML = c.textContent.replace(/\b(always|nobody|never|everyone|nothing|forever)\b/i, "<u>$1</u>"); }); }, 45000);
+  }
+  function done1() {
+    p1done = true;
+    document.querySelectorAll("#cards button:not(.gone)").forEach(b => b.classList.add("bright"));
+    $("cap").textContent = "These were you.";
+    setTimeout(() => { say("It always spoke in forever. I had stopped checking."); say(`${NAME}, you silenced them faster than I ever did.`); svBase = .3; go("p2", "It wants you to stop. Don't.", 1); }, 3800);
+  }
+
+  /* ---------- 2: the weight. Keep going, even when it pulls back. ---------- */
+  let meter = 0, p2on = false, spawn, strikes2 = 0;
+  const LWORDS = ["later", "why bother", "tomorrow", "not today", "too tired", "sleep"];
+  $("up").addEventListener("pointerdown", e => {
+    e.preventDefault(); if (!p2on) return; meter = Math.min(100, meter + 7); thud();
+    if (meter >= 100) { p2on = false; clearInterval(spawn); document.querySelectorAll(".lie").forEach(l => l.remove());
+      setTimeout(() => { say("Some mornings, standing up was the whole fight."); svBase = .34; go("p3", "4 \u00B7 2 \u00B7 4", 2); }, 1500); }
+  });
+  function enterP2() {
+    meter = 0; p2on = true; strikes2 = 0; flash(`It is ${CLOCK}. Whatever you had planned, it can wait.`, 5000);
+    spawn = setInterval(() => {
+      const l = document.createElement("button"); l.className = "lie"; l.textContent = rnd(LWORDS);
+      l.style.left = 12 + Math.random() * 60 + "%"; l.style.top = 6 + Math.random() * 50 + "%";
+      l.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); if (!p2on) return;
+        meter = Math.max(0, meter - 40); svBump = Math.min(.7, svBump + .2); bump(); jolt(); l.remove(); strikes2++;
+        flash("It wanted you to stop.");
+        if (strikes2 >= 3) { strikes2 = 0; meter = 0; flash("Back on the floor. Again.", 3000); } });
+      $("field").appendChild(l); setTimeout(() => l.remove(), 3300);
+    }, 1050);
+  }
+
+  /* ---------- 3: the breath. Only a vague hint: 4 - 2 - 4. ---------- */
+  let p3on = false, ph = 0, tP = 0, tG = 0, lvl = 0, cyc = 0, fails3 = 0;
+  const NEED = 3, TOL = .85;
+  const dots = () => $("dots").innerHTML = [...Array(NEED)].map((_, i) => i < cyc ? "&#9679;" : "&middot;").join(" ");
+  function fail3(msg) {
+    ph = 0; bump(); jolt(); svBump = Math.min(.7, svBump + .15); fails3++; $("bst").textContent = msg;
+    if (fails3 >= 3) { fails3 = 0; cyc = 0; $("bst").textContent = "Start again."; }
+    dots();
+  }
+  $("breathe").addEventListener("pointerdown", e => {
+    e.preventDefault(); if (!p3on) return; const now = performance.now();
+    if (ph === 0) { ph = 1; tP = now; $("bst").textContent = ""; }
+    else if (ph === 2) { const g = (now - tG) / 1000; if (Math.abs(g - 2) <= TOL) { ph = 3; tP = now; $("bst").textContent = ""; } else fail3(g < 2 ? "Too soon." : "Too long."); }
+  });
+  const rel = () => {
+    const now = performance.now();
+    if (ph === 1) { const d = (now - tP) / 1000; if (Math.abs(d - 4) <= TOL) { ph = 2; tG = now; } else fail3(d < 4 ? "Too soon." : "Too long."); }
+    else if (ph === 3) {
+      const d = (now - tP) / 1000;
+      if (Math.abs(d - 4) <= TOL) { ph = 0; cyc++; dots(); tone("sine", 330, 330, .08, 1.2); if (cyc >= NEED) done3(); else $("bst").textContent = "Again."; }
+      else fail3(d < 4 ? "Too soon." : "Too long.");
+    }
+  };
+  addEventListener("pointerup", rel); addEventListener("pointercancel", rel);
+  function enterP3() {
+    p3on = true; lvl = 0; cyc = 0; ph = 0; fails3 = 0; dots();
+    setTimeout(() => { if (p3on && cyc === 0) $("cap").textContent = "Between the two, don't touch."; }, 30000);
+  }
+  function done3() {
+    p3on = false; $("bst").textContent = "";
+    setTimeout(() => { say("I learned to breathe like it was a task. It was."); svBase = .4; go("p4", "The voice is loudest at the door.", 3); }, 1800);
+  }
+
+  /* ---------- 4: tell someone. It is the one door the voice keeps shut. ---------- */
+  const SHOUT = ["Don't.", "It's fine.", "They'll worry.", "Keep it quiet.", "Not now.", "You're overreacting.", "It's only a game. Close it.", "Nobody is reading this."];
+  let p4on = false, h4 = false, prog = 0, shoutT = 0;
+  $("tell").addEventListener("pointerdown", e => { e.preventDefault(); if (p4on) { h4 = true; holdFx(true); } });
+  const rel4 = () => { if (h4 && p4on && prog > .35 && prog < 1) { jolt(); flash("Don't let go.", 1800); } h4 = false; holdFx(false); }; addEventListener("pointerup", rel4); addEventListener("pointercancel", rel4);
+  function enterP4() {
+    p4on = true; prog = 0; $("shout").textContent = "It's fine.";
+    setTimeout(() => { if (p4on && !h4) $("cap").textContent = "Hold. It only gets loud because it is losing."; }, 10000);
+  }
+  function done4() {
+    p4on = false; h4 = false; holdFx(false); $("stage").style.transform = ""; $("shout").textContent = "";
+    svBase = 0; svBump = 0; document.body.classList.add("warm"); setLevel(4); $("fog").style.opacity = 0;
+    $("thanks").textContent = `Thank you for staying, ${NAME}. You can close this page now. But if you have a minute, tell someone something real today.`;
+    const n = ["nl1", "nl2", "nl3", "nl4"].reduce((a, k) => a + (+localStorage.getItem(k) || 0), 0);
+    $("tally").textContent = n > 0 ? `You got it wrong ${n} time${n === 1 ? "" : "s"}. You are still here.` : "You never fell once. Be gentle with the ones who do.";
+    [261.6, 329.6, 392].forEach((f, i) => setTimeout(() => tone("sine", f, f, .1, 6), i * 700));      // a soft chord
+    go("end", "", 4);
+    setTimeout(() => [...document.querySelectorAll("#end p")].forEach((p, i) => setTimeout(() => p.classList.add("on"), i * 3000)), 2600);
+  }
+  const enter = { p1: enterP1, p2: enterP2, p3: enterP3, p4: enterP4 };
+
+  /* ---------- loop ---------- */
+  let last = performance.now(), gAcc = 0;
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    svBump = Math.max(0, svBump - dt * .07);
+    sv = Math.min(1, svBase + svBump + p4prog * .5);
+    sx += (mx - sx) * .035; sy += (my - sy) * .035;
+    const sz = 130 + sv * 260; $("shade").style.width = $("shade").style.height = sz + "px";
+    $("shade").style.transform = `translate(${sx - sz / 2}px,${sy - sz / 2}px)`;
+    if (cur === "p1") {
+      const a = .3 + sv * 2.4, tt = now / 1000;
+      CARDS.forEach((b, i) => {
+        if (b.classList.contains("gone")) { b.style.transform = ""; return; }
+        b.style.transform = calm ? "" : `translate(${(Math.sin(tt * .8 + i) * a + (Math.random() - .5) * a).toFixed(2)}px,${((Math.random() - .5) * a * .6).toFixed(2)}px)`;
+      });
+    }
+    nz.style.opacity = .05 + sv * .45;
+    if (droneG) droneG.gain.setTargetAtTime(sv * .5, ac.currentTime, .5);
+
+    if (p2on) {
+      meter = Math.max(0, meter - 7 * dt);
+      document.querySelector("#bar i").style.height = meter + "%";
+      $("up").style.transform = `translateY(${(100 - meter) * .16}px)`;               // it sinks when you let go
+    }
+    if (p3on) {
+      const nw = performance.now();
+      if (ph === 1) lvl = Math.min(1, lvl + dt / 4); else if (ph === 3) lvl = Math.max(0, lvl - dt / 4); else if (ph === 0) lvl -= lvl * Math.min(1, dt * 2);
+      $("ring").style.transform = `scale(${.3 + .7 * lvl})`;
+      const el = (ph === 1 || ph === 3) ? (nw - tP) / 1000 : ph === 2 ? (nw - tG) / 1000 : -1;
+      $("cnt").textContent = el < 0 ? "" : Math.min(9, Math.floor(el) + 1);
+      if (ph === 2 && el > 4.5) fail3("Too long.");
+    }
+    if (p4on) {
+      prog = h4 ? prog + dt / 4.2 : Math.max(0, prog - dt / .7); p4prog = prog;
+      document.querySelector("#prog i").style.width = Math.min(100, prog * 100) + "%";
+      if (hOsc) { hOsc.frequency.setTargetAtTime(55 + prog * 190, ac.currentTime, .05); hG.gain.setTargetAtTime(prog * .11, ac.currentTime, .05); }
+      gAcc += dt; if (h4 && gAcc > .3) { gAcc = 0; glitch(prog * .5, .1); }
+      if (h4) {
+        shoutT += dt; if (shoutT > .7) { shoutT = 0; $("shout").textContent = rnd(SHOUT); }
+        if (!calm) $("stage").style.transform = `translate(${(Math.random() - .5) * prog * 8}px,${(Math.random() - .5) * prog * 5}px)`;
+      } else $("stage").style.transform = "";
+      $("shout").style.color = `rgb(${68 + prog * 150},${68 + prog * 150},${68 + prog * 150})`;
+      if (prog >= 1) done4();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  $("endgo").addEventListener("click", e => {
+    e.preventDefault(); try { localStorage.setItem("nlcarry", "1"); } catch (x) {}
+    document.body.style.transition = "opacity 1.6s"; document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle5.html", 1700);
+  });
+</script>
+</body>
+</html>

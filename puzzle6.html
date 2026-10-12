@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E">
+<title>VI</title>
+<style>
+  :root { --fg:#cfcfcf; --dim:#666; --gold:#f0d9a6; --red:#b04a4a; }
+  html { -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; background:#000; color:var(--fg); }
+  body { font-family:"Courier New", Courier, monospace; font-size:15px; line-height:1.55; transition:opacity 2s; }
+  #fog { position:fixed; inset:-20%; z-index:0; pointer-events:none; opacity:.5; animation:drift 28s ease-in-out infinite alternate;
+         background:radial-gradient(40% 30% at 30% 40%, #161616, transparent), radial-gradient(35% 35% at 75% 65%, #131313, transparent); }
+  @keyframes drift { to { transform:translate(8%,-6%) scale(1.15); } }
+  #noise { position:fixed; inset:0; width:100%; height:100%; z-index:20; pointer-events:none; mix-blend-mode:overlay; image-rendering:pixelated; opacity:.08; }
+  #scan { position:fixed; inset:0; z-index:25; pointer-events:none; background:repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px); animation:fl 7s infinite; }
+  @keyframes fl { 0%,100% { opacity:1; } 50% { opacity:.75; } 93% { opacity:.4; } }
+  .voice { position:fixed; z-index:15; pointer-events:none; opacity:0; color:#444; }
+  #wake { position:fixed; inset:0; z-index:30; background:#000; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity 2s; }
+  #wake p { color:var(--dim); margin:0; animation:bl 3s ease-in-out infinite; } @keyframes bl { 50% { opacity:.3; } }
+  #wake.off { opacity:0; pointer-events:none; }
+
+  #crt { position:relative; z-index:2; max-width:44rem; margin:0 auto; padding:3vh 1rem 14vh; box-sizing:border-box; }
+  #bar { display:flex; justify-content:space-between; color:var(--dim); border-bottom:1px solid #1d1d1d; padding-bottom:.4rem; margin-bottom:1rem; font-size:.85rem; }
+  #out .l { white-space:pre-wrap; word-break:break-word; text-shadow:0 0 6px rgba(200,200,200,.18); min-height:1.2em; }
+  .dim { color:var(--dim); } .err { color:var(--red); } .hn { color:#c9a24a; } .ok { color:var(--gold); }
+  .fn { color:#fff; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+  .frag { color:#fff; background:#141414; padding:0 .3rem; cursor:pointer; word-break:break-all; }
+  #pr { display:flex; gap:.5rem; align-items:center; margin-top:.2rem; }
+  #in { all:unset; flex:1; color:#fff; caret-color:#fff; min-width:0; text-shadow:0 0 6px rgba(255,255,255,.3); }
+  #chips { margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap; }
+  #chips button { all:unset; cursor:pointer; border:1px solid #2a2a2a; padding:.25rem .8rem; color:var(--dim); } #chips button:hover { color:#fff; border-color:#666; }
+  body.hit { animation:hit .5s steps(2,end); } @keyframes hit { 0%,100% { background:#000; } 30% { background:#1a0000; } }
+  #crt.shk { animation:shk .3s; } @keyframes shk { 25% { transform:translateX(-8px); } 75% { transform:translateX(7px); } }
+  @media (prefers-reduced-motion:reduce) { #fog, #scan, #crt.shk, body.hit { animation:none; } }
+</style>
+</head>
+<body>
+<noscript><p style="padding:2rem">This needs JavaScript to run.</p></noscript>
+<div id="fog"></div><canvas id="noise" width="96" height="96"></canvas><div id="scan"></div>
+<div id="wake"><p id="wp">tap to open the archive</p></div>
+
+<main id="crt">
+  <div id="bar"><span>ARCHIVE</span><span id="prog">DOOR 6 / 15 &middot; FILES 0 / 5</span></div>
+  <div id="out"></div>
+  <div id="pr"><span class="dim">x@archive:~$</span><input id="in" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="command"></div>
+  <div id="chips"><button data-c="ls">ls</button><button data-c="help">help</button><button data-c="tools">tools</button></div>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const get = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } };
+  const bump = k => { try { localStorage.setItem(k, get(k) + 1); } catch (e) {} };
+  const NAME = (() => { try { return localStorage.getItem("nlname") || "you"; } catch (e) { return "you"; } })();
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  /* ---------- the five ways to say something without saying it ---------- */
+  const rot13 = s => s.replace(/[a-z]/gi, c => { const b = c <= "Z" ? 65 : 97; return String.fromCharCode((c.charCodeAt(0) - b + 13) % 26 + b); });
+  const atbash = s => s.replace(/[a-z]/gi, c => { const b = c <= "Z" ? 65 : 97; return String.fromCharCode(b + 25 - (c.charCodeAt(0) - b)); });
+  const MC = ".-,-...,-.-.,-..,.,..-.,--.,....,..,.---,-.-,.-..,--,-.,---,.--.,--.-,.-.,...,-,..-,...-,.--,-..-,-.--,--..".split(",");
+  const MD = "-----,.----,..---,...--,....-,.....,-....,--...,---..,----.".split(",");
+  const MORSE = {}, UNMORSE = {};
+  MC.forEach((m, i) => MORSE[String.fromCharCode(65 + i)] = m); MD.forEach((m, i) => MORSE[String(i)] = m);
+  Object.keys(MORSE).forEach(k => UNMORSE[MORSE[k]] = k);
+  const T = {
+    rot13: { enc: rot13, dec: rot13 }, atbash: { enc: atbash, dec: atbash },
+    morse: { enc: s => [...s.toUpperCase()].map(c => c === " " ? "/" : MORSE[c] || "").join(" "), dec: s => s.trim().split(/\s+/).map(t => t === "/" ? " " : UNMORSE[t] || "?").join("") },
+    bin:   { enc: s => [...s].map(c => c.charCodeAt(0).toString(2).padStart(8, "0")).join(" "), dec: s => s.trim().split(/\s+/).map(b => String.fromCharCode(parseInt(b, 2) || 63)).join("") },
+    hex:   { enc: s => [...s].map(c => c.charCodeAt(0).toString(16).padStart(2, "0")).join(" "), dec: s => s.trim().split(/\s+/).map(h => String.fromCharCode(parseInt(h, 16) || 63)).join("") }
+  };
+
+  /* ---------- the files. Each lock is something she already did. ---------- */
+  const words = s => s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const digits = s => s.replace(/\D/g, "");
+  const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+  const F = {
+    "readme.txt": { open: true, text: ["You made it through the dream.", "I kept the rest of it here.", "",
+      "Everything I locked, I locked with something you already did.", "Tap a file. Then:  unlock <file> <password>", "Lost? Try  help.  The voice will charge you for hints."] },
+    "memory.enc": { pw: p => same(words(p), ["eye", "kidney", "limbs", "lungs", "heart"]),
+      hint: "What did he give away? Say it in the order he gave it.",
+      text: ["[memory.enc]", "He kept a list of what he gave away.", "He wrote it fast, thirteen steps from the truth."], frag: T.rot13.enc("3 HERE") },
+    "wind.log": { pw: p => same(words(p).sort(), ["corpse", "nightmare", "tears"]),
+      hint: "The wind wheezed beneath his ___. Three endings. Any order.",
+      text: ["[wind.log]", "The wind never said a word. It only wheezed.", "It breathes in long and short."], frag: T.morse.enc("5 ME") },
+    "lock.bin": { pw: p => digits(p) === "1407",
+      hint: "Four digits. Two from the dark, two from the heart.",
+      text: ["[lock.bin]", "Only two kinds of numbers were ever allowed in here."], frag: T.bin.enc("1 PLEASE") },
+    "breath.sh": { pw: p => digits(p) === "424",
+      hint: "Three numbers. One breath. No words.",
+      text: ["[breath.sh]", "He learned to breathe like it was a task.", "Sixteen symbols; two for each thing he said out loud."], frag: T.hex.enc("4 WITH") },
+    "return.txt": { pw: p => same(words(p), ["heart", "lungs", "limbs", "kidney", "eye"]),
+      hint: "What was given last must return first.",
+      text: ["[return.txt]", "He was put back together, piece by piece.", "Read it in a mirror. First becomes last."], frag: T.atbash.enc("2 STAY") },
+    "door.enc": { door: true, hint: "Five fragments. Each one carries its own number. Say it out loud." },
+    ".shadow": { open: true, hidden: true, text: ["You don't need the hints.", "If you are tired, tell the door you're fine. It opens for that.", "(try it)"] }
+  };
+  const open = new Set(), done = new Set(), wrongC = {}; let lastFrag = "", lockUntil = 0, busy = false;
+  const hist = []; let hi = 0;
+  const resolve = n => { n = (n || "").toLowerCase(); if (!n) return undefined; return Object.keys(F).find(k => k === n || k.split(".")[0] === n); };
+
+  /* ---------- sound + weather (same as the last doors) ---------- */
+  let ac, sv = .2, svBump = 0, droneG, booted = false;
+  function tone(type, f0, f1, v, dur) {
+    if (!ac) return; const n = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, n); o.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    g.gain.setValueAtTime(0, n); g.gain.linearRampToValueAtTime(v, n + .005); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+    o.connect(g); g.connect(ac.destination); o.start(n); o.stop(n + dur + .05);
+  }
+  function glitch(v = .5, dur = .25) {
+    if (!ac) return; const n = ac.currentTime, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / len); if (i % 37 < 6) d[i] *= 3; }
+    const src = ac.createBufferSource(); src.buffer = buf; const ws = ac.createWaveShaper(), c = new Float32Array(256);
+    for (let i = 0; i < 256; i++) c[i] = Math.tanh((i / 128 - 1) * 6); ws.curve = c;
+    const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 800 + Math.random() * 2400; f.Q.value = .9;
+    const g = ac.createGain(); g.gain.value = v * .5; src.connect(f); f.connect(ws); ws.connect(g); g.connect(ac.destination); src.start(n);
+    tone("sawtooth", 140 + Math.random() * 80, 40, v * .16, dur);
+  }
+  const tick = () => tone("square", 1200, 700, .012, .025);
+  const chime = n => [523.2, 659.2, 784, 1046.5].slice(0, n).forEach((f, i) => setTimeout(() => tone("sine", f, f, .07, 1.6), i * 160));
+  const jolt = () => { glitch(.7, .28); document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit");
+                       $("crt").classList.remove("shk"); void $("crt").offsetWidth; $("crt").classList.add("shk"); };
+  function boot() {
+    if (booted) return; booted = true; ac = new (window.AudioContext || window.webkitAudioContext)(); ac.resume();
+    const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0); let l = 0;
+    for (let i = 0; i < len; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; }
+    const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 170;
+    droneG = ac.createGain(); droneG.gain.value = 0; s.connect(f); f.connect(droneG); droneG.connect(ac.destination); s.start();
+    $("wake").classList.add("off"); startUp();
+  }
+  $("wake").addEventListener("click", boot);
+  document.body.style.opacity = 0; setTimeout(() => document.body.style.opacity = 1, 50);
+  if (get("nlcarry")) $("wp").textContent = "he handed you the keys. tap.";
+  const nctx = $("noise").getContext("2d"), img = nctx.createImageData(96, 96);
+  setInterval(() => {
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    nctx.putImageData(img, 0, 0);
+    svBump = Math.max(0, svBump - .006); sv = Math.min(1, .2 + svBump);
+    $("noise").style.opacity = .04 + sv * .4; if (droneG) droneG.gain.setTargetAtTime(sv * .45, ac.currentTime, .5);
+  }, 90);
+  const VW = ["again", "why", "tired", "listen", "no", "quiet", "stay", "still here?"];
+  (function wander() {
+    setTimeout(() => {
+      if (!calm && booted) {
+        const e = document.createElement("span"); e.className = "voice"; e.textContent = VW[Math.floor(Math.random() * VW.length)];
+        e.style.left = Math.random() * 80 + "%"; e.style.top = Math.random() * 85 + "%"; e.style.fontSize = (1 + Math.random() * 1.4) + "rem";
+        document.body.appendChild(e); glitch(.08 + sv * .2, .1);
+        e.animate([{ opacity: 0 }, { opacity: .15 + sv * .4 }, { opacity: 0 }], { duration: 1200 }).onfinish = () => e.remove();
+      }
+      wander();
+    }, 3200 - sv * 1800 + Math.random() * 2500);
+  })();
+
+  /* ---------- terminal ---------- */
+  const out = $("out"), inp = $("in");
+  const scroll = () => $("pr").scrollIntoView({ block: "end" });
+  function add(h, c = "") { const d = document.createElement("div"); d.className = "l " + c; d.innerHTML = h; out.appendChild(d); scroll(); return d; }
+  async function say(lines, delay = 85) {
+    busy = true;
+    for (const l of lines) { const o = typeof l === "string" ? { h: l } : l; add(o.h === "" ? "&nbsp;" : o.h, o.c || ""); if (!calm) { tick(); await sleep(delay); } }
+    busy = false;
+  }
+  const fn = n => `<span class="fn" data-f="${n}">${n}</span>`;
+  const status = () => $("prog").innerHTML = `DOOR 6 / 15 &middot; FILES ${done.size} / 5`;
+  function echo(t) { add(`<span class="dim">x@archive:~$</span> ${esc(t)}`); }
+
+  async function startUp() {
+    await say(["ARCHIVE 1.0 \u2014 nothing-left/x", "mounting memories .......... ok", "mounting wind .............. ok", "mounting lock .............. ok",
+      "mounting breath ............ ok", "mounting return ............ ok", "", `user: ${esc(NAME)}`,
+      { h: "type  help,  or tap a file name.", c: "dim" }, ""], 140);
+    await run("ls", true); inp.focus();
+  }
+
+  function failAttempt(file, msg) {
+    bump("nl6"); svBump = Math.min(.7, svBump + .15); jolt();
+    wrongC[file] = (wrongC[file] || 0) + 1;
+    if (wrongC[file] >= 3) { wrongC[file] = 0; lockUntil = Date.now() + 15000; return say([{ h: msg, c: "err" }, { h: "The voice is in the way. Wait 15 seconds.", c: "err" }]); }
+    return say([{ h: `${msg}  (${wrongC[file]}/3)`, c: "err" }]);
+  }
+  const waitLeft = () => Math.ceil((lockUntil - Date.now()) / 1000);
+
+  async function showFile(name) {
+    const f = F[name], lines = f.text.map(t => ({ h: esc(t) }));
+    if (f.frag) { lastFrag = f.frag; lines.push({ h: "" }, { h: `FRAGMENT&gt; <span class="frag" data-x="1">${f.frag}</span>`, c: "ok" }, { h: "tap the fragment, then:  decode <method>", c: "dim" }); }
+    await say(lines);
+  }
+
+  async function run(raw, silent) {
+    const line = raw.trim(); if (!silent) echo(line); if (!line) return;
+    if (!silent) { hist.push(line); hi = hist.length; }
+    const parts = line.split(/\s+/), cmd = parts[0].toLowerCase(), arg = parts[1];
+    switch (cmd) {
+      case "help": return say(["commands:", "  ls [-a]                    list files", "  cat <file>                 read a file (or just tap its name)",
+        "  unlock <file> <password>   open a locked file", "  decode <method> [text]     methods: rot13 atbash morse bin hex",
+        "                             no text = the last fragment you tapped", "  hint <file>                ask for help. it costs you.", "  tools  stats  whoami  clear"]);
+      case "tools": return say(["decode methods:", "  rot13   atbash   morse   bin   hex", { h: "figure out which one each file wants.", c: "dim" }]);
+      case "whoami": return say([NAME + (get("nlcarry") ? "  (he remembers you)" : "")]);
+      case "stats": return say([`mistakes: ${["nl1", "nl2", "nl3", "nl4", "nl5", "nl6"].reduce((a, k) => a + get(k), 0)}`, `hints:    ${get("nlh")}`]);
+      case "clear": out.innerHTML = ""; return;
+      case "sudo": return say([{ h: "nice try.", c: "err" }]);
+      case "exit": return say([{ h: "there is no exit. not yet.", c: "dim" }]);
+      case "ls": {
+        const all = /-a/.test(line), lines = [];
+        Object.keys(F).filter(k => all || !F[k].hidden).forEach(k => {
+          const st = k === "door.enc" ? "[sealed]" : F[k].open || done.has(k) ? "[open]" : "[locked]";
+          lines.push({ h: `${fn(k)}${" ".repeat(Math.max(1, 14 - k.length))}<span class="dim">${st}</span>` });
+        });
+        return say(lines, 60);
+      }
+      case "cat": case "open": {
+        const n = resolve(arg); if (!n) return say([{ h: "no such file.", c: "err" }]);
+        if (n === "door.enc") return say([{ h: "sealed. it asks for a phrase.", c: "dim" }, { h: "unlock door.enc <phrase>", c: "dim" }]);
+        if (F[n].open || done.has(n)) return showFile(n);
+        inp.value = `unlock ${n} `; inp.focus();
+        return say([{ h: `${n} is locked.`, c: "err" }, { h: `unlock ${n} <password>`, c: "dim" }]);
+      }
+      case "hint": {
+        const n = resolve(arg); if (!n || !F[n].hint) return say([{ h: "hint <file>", c: "dim" }]);
+        if (Date.now() < lockUntil) return say([{ h: `The voice is in the way. ${waitLeft()}s.`, c: "err" }]);
+        bump("nlh"); svBump = Math.min(.7, svBump + .1); glitch(.3, .15);
+        return say([{ h: "the voice charges you for this.", c: "dim" }, { h: F[n].hint, c: "hn" }]);
+      }
+      case "decode": {
+        const m = (arg || "").toLowerCase(), t = T[m];
+        if (!t) return say([{ h: "decode <rot13|atbash|morse|bin|hex> [text]", c: "dim" }]);
+        const mm = line.match(/^decode\s+\S+\s+([\s\S]+)$/i), txt = mm ? mm[1] : lastFrag;
+        if (!txt) return say([{ h: "nothing to decode. open a file first.", c: "err" }]);
+        return say([{ h: `=> ${esc(t.dec(txt))}`, c: "ok" }]);
+      }
+      case "unlock": {
+        const mm = line.match(/^unlock\s+(\S+)\s*([\s\S]*)$/i), n = mm && resolve(mm[1]), pw = mm ? mm[2] : "";
+        if (!n) return say([{ h: "unlock <file> <password>", c: "dim" }]);
+        if (Date.now() < lockUntil) return say([{ h: `The voice is in the way. ${waitLeft()}s.`, c: "err" }]);
+        if (F[n].open || done.has(n)) return say([{ h: "already open.", c: "dim" }]);
+        if (!pw.trim()) return say([{ h: "a password, please.", c: "dim" }]);
+        if (n === "door.enc") {
+          if (same(words(pw), ["i", "am", "fine"])) { bump("nl6"); jolt(); return say([{ h: "The door laughed. It never opens for that.", c: "err" }]); }
+          if (same(words(pw), ["please", "stay", "here", "with", "me"])) return finale();
+          return failAttempt(n, "the door does not move.");
+        }
+        if (F[n].pw(pw)) {
+          done.add(n); status(); chime(2); await say([{ h: "ACCESS GRANTED", c: "ok" }, ""]); return showFile(n);
+        }
+        return failAttempt(n, "wrong.");
+      }
+      default: return say([{ h: `unknown command: ${esc(cmd)}`, c: "err" }, { h: "type help.", c: "dim" }]);
+    }
+  }
+
+  async function finale() {
+    chime(4); glitch(.4, .4); localStorage.setItem("nlp6", "1");
+    await say(["", { h: ">>> door.enc ......... open", c: "ok" }, "", { h: "DOOR 6 / 15", c: "ok" }, ""], 400);
+    await say(["He wrote:  \u201CI stopped dreaming at 4:12 in the morning. I stayed anyway.\u201D", "",
+      "He wrote:  \u201CPlease stay here with me. Not forever. Only for the next door.\u201D", "",
+      `You stayed for five locked files, ${esc(NAME)}. I counted.`, `Mistakes so far: ${["nl1", "nl2", "nl3", "nl4", "nl5", "nl6"].reduce((a, k) => a + get(k), 0)}.   Hints you paid for: ${get("nlh")}.`, "",
+      { h: "Nine doors left.", c: "ok" }, ""], 1400);
+    add(`<span class="fn" id="next">continue</span>`);
+  }
+
+  out.addEventListener("click", e => {
+    const t = e.target;
+    if (t.id === "next") { document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle7.html", 2100); return; }
+    if (busy) return;
+    if (t.classList.contains("fn") && t.dataset.f) { inp.value = ""; run("cat " + t.dataset.f); }
+    else if (t.classList.contains("frag")) { lastFrag = t.textContent; tick(); add("(fragment selected)", "dim"); inp.focus(); }
+  });
+  $("chips").addEventListener("click", e => { const c = e.target.dataset && e.target.dataset.c; if (c && !busy) run(c); });
+  inp.addEventListener("input", tick);
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter") { if (busy) return; const v = inp.value; inp.value = ""; tone("square", 500, 500, .02, .06); run(v); }
+    else if (e.key === "ArrowUp" && hist.length) { hi = Math.max(0, hi - 1); inp.value = hist[hi]; e.preventDefault(); }
+    else if (e.key === "ArrowDown") { hi = Math.min(hist.length, hi + 1); inp.value = hist[hi] || ""; e.preventDefault(); }
+    else if (e.key === "Tab") { e.preventDefault(); const parts = inp.value.split(/\s+/), last = (parts.pop() || "").toLowerCase();
+      const m = Object.keys(F).filter(k => !F[k].hidden && last && k.startsWith(last)); if (m.length === 1) { parts.push(m[0]); inp.value = parts.join(" ") + " "; } }
+  });
+  document.addEventListener("click", e => { if (booted && !window.getSelection().toString() && e.target.tagName !== "BUTTON") inp.focus(); });
+</script>
+</body>
+</html>
