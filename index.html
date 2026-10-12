@@ -1,106 +1,251 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hex</title>
-    <style>
-        body {
-            background-color: #000;
-            color: #0f0;
-            font-family: monospace;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        
-        .container {
-            text-align: left;
-            max-width: 500px;
-        }
-        
-        .hex-code {
-            font-size: 14px;
-            margin-bottom: 40px;
-            word-break: break-all;
-            line-height: 1.6;
-        }
-        
-        .input-section {
-            margin-top: 30px;
-        }
-        
-        input[type="text"] {
-            background-color: #000;
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            font-family: monospace;
-            margin-bottom: 10px;
-        }
-        
-        input[type="text"]:focus {
-            outline: none;
-            border: 1px solid #0f0;
-        }
-        
-        button {
-            background-color: #000;
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 8px 20px;
-            font-family: monospace;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        button:hover {
-            background-color: #0f0;
-            color: #000;
-        }
-        
-        .message {
-            margin-top: 20px;
-            font-size: 12px;
-            min-height: 20px;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nothing Left</title>
+<style>
+  :root { --bg:#000; --fg:#cfcfcf; --dim:#6b6b6b; --red:#8a0000; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); }
+  body {
+    font-family:"Times New Roman", Times, serif; font-size:19px; line-height:1.7;
+    max-width:34rem; margin:0 auto; padding:12vh 1.4rem 18vh; overflow-x:hidden;
+  }
+  #dust { position:fixed; inset:0; width:100%; height:100%; z-index:-1; pointer-events:none; }
+
+  /* heartbeat visuals */
+  #vig { position:fixed; inset:0; z-index:3; pointer-events:none; opacity:.3; transition:opacity 3s;
+         background:radial-gradient(ellipse at center, transparent 35%, #000 100%); }
+  #pulse { position:fixed; inset:0; z-index:3; pointer-events:none; opacity:0; transition:opacity .7s;
+           background:radial-gradient(ellipse at center, transparent 30%, rgba(110,0,0,.55) 100%); }
+  #pulse.hot { opacity:1; transition:opacity .05s; }
+
+  /* title screen */
+  #title { position:fixed; inset:0; background:#000; z-index:5; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; cursor:pointer; transition:opacity 2.5s; }
+  #title h1 { font-size:2.6rem; font-weight:normal; letter-spacing:.12em; margin:0 0 1.4rem; opacity:0; animation:show 4s 1s forwards; }
+  #title p { color:var(--dim); font-style:italic; margin:0; opacity:0; animation:show 2s 5s forwards; }
+  #title.off { opacity:0; pointer-events:none; }
+  @keyframes show { to { opacity:1; } }
+
+  h2 { font-size:1.6rem; font-weight:normal; margin:0 0 .2rem; }
+  .by { color:var(--dim); font-style:italic; margin:0 0 3rem; }
+  .story p { margin:0 0 1.3rem; opacity:0; transition:opacity 2s; }
+  .story p.on { opacity:1; }
+  .story.fade p.on { opacity:.06; transition:opacity 28s linear; }   /* the memory slips away */
+
+  /* arena: the words will not stay still */
+  #arena { position:relative; height:min(56vh, 430px); margin:2.5rem 0 1rem; opacity:0; transition:opacity 2.5s; }
+  #arena.on { opacity:1; }
+  #arena button {
+    all:unset; cursor:pointer; position:absolute; left:0; top:0; color:var(--fg);
+    text-decoration:underline; text-underline-offset:4px; padding:6px 4px; will-change:transform;
+  }
+  #arena button:hover, #arena button:focus-visible { color:#fff; }
+  #arena button.done { color:var(--dim); text-decoration:line-through; cursor:default; }
+  #msg { min-height:1.7em; color:var(--red); margin:0; }
+
+  #end { display:none; margin-top:4rem; }
+  #end p { margin:0 0 1.3rem; opacity:0; transition:opacity 2.5s; }
+  #end p.on { opacity:1; }
+  .sign { color:var(--dim); font-style:italic; }
+  .go { color:var(--fg); text-underline-offset:4px; }
+  .go:hover, .go:focus-visible { color:#fff; }
+
+  #chest { position:fixed; left:0; right:0; top:36%; z-index:4; text-align:center; font-size:3.4rem; font-weight:bold;
+           letter-spacing:.15em; color:#a00; opacity:0; pointer-events:none; }
+  #chest.on { opacity:1; animation:thud .25s steps(2,end) infinite; }
+  @keyframes thud { 50% { transform:scale(1.07) translate(3px,-2px); } }
+  body.hit { animation:hit .7s steps(2,end); }
+  @keyframes hit { 0%,100%{background:#000} 20%{background:#200} 40%{background:#000} 60%{background:#1a0000} }
+  @media (prefers-reduced-motion:reduce) { body.hit, #chest.on { animation:none; } #title h1, #title p { animation-duration:.01s; animation-delay:0s; } }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="hex-code">57484154 20544845 2048454c 4c204920 444f</div>
-        
-        <div class="input-section">
-            <input type="text" id="answer" placeholder="">
-            <button onclick="check()">Monster</button>
-            <div class="message" id="message"></div>
-        </div>
-    </div>
-    
-    <script>
-        function check() {
-            const answer = document.getElementById('answer').value;
-            const message = document.getElementById('message');
-            
-            if (answer === 'WHAT THE HELL I DO') {
-                message.textContent = '> acceso concedido';
-                message.style.color = '#0f0';
-            } else {
-                message.textContent = '> intenta de nuevo';
-                message.style.color = '#f00';
-            }
+<canvas id="dust"></canvas>
+<div id="vig"></div><div id="pulse"></div><div id="chest">MY CHEST</div>
+
+<div id="title" role="button" tabindex="0">
+  <h1>Nothing Left</h1>
+  <p>tap to begin</p>
+</div>
+
+<h2>The Longest Dream</h2>
+<p class="by">written by X</p>
+
+<div class="story" id="story">
+  <p>He loved her more than he loved being alive. When she fell ill, the doctors named a price. He did not ask how much.</p>
+  <p>She smiled when he told her he had signed the paper. He thought the dark was a fair trade, and he learned to read by touch with the one eye he had left. Then there was none.</p>
+  <p>The kidney was quick. It hurt less than he expected. She said thank you, but she was already looking at her phone.</p>
+  <p>The limbs went one by one. He learned to be carried. She visited less, and he told himself she was busy getting better.</p>
+  <p>His lungs went after that. Every breath was a machine's decision, not his. He stopped speaking, but he listened for her steps in the hall.</p>
+  <p>The heart he gave without being asked twice. It was the only thing he had left that was truly his.</p>
+  <p>She was well now. She stood at his bed, bright and healthy, and asked if he remembered everything.</p>
+</div>
+
+<div id="arena"></div>
+<p id="msg" role="status"></p>
+
+<div id="end">
+  <p>She did not say it.</p>
+  <p>She never loved him. She only needed what he had, and he had so much.</p>
+  <p>She left through the door he could no longer turn his head to see.</p>
+  <p class="sign">- X</p>
+  <p><a href="puzzle2.html" class="go">continue</a></p>
+</div>
+
+<script>
+  const ORDER = ["eye", "kidney", "limbs", "lungs", "heart"];
+  const WORDS = ["dye","heart","limbo","kidnap","eyed","lungs","hurt","iris","limp","kindly",
+                 "earth","kidney","lunge","hearse","eye","limbs","longs","lumps","heard","hearth"];
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const arena = document.getElementById("arena"), msg = document.getElementById("msg");
+  const vig = document.getElementById("vig"), pulse = document.getElementById("pulse");
+  let step = 0, flat = false, running = false, frenzy = false;
+  const chest = document.getElementById("chest");
+
+  const W = WORDS.map((w, i) => {
+    const b = document.createElement("button");
+    b.textContent = w;
+    b.addEventListener("pointerdown", e => { e.preventDefault(); pick(w, b); });
+    b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") pick(w, b); });
+    arena.appendChild(b);
+    return { b, w, x: 0, y: 0, a: Math.random() * 6.28, s: 20, r: i * 1.7 };
+  });
+  const base = () => calm ? 4 : 22 + step * 12;
+
+  /* ---------- heartbeat: sound + a red pulse at the edges ---------- */
+  let ac, beatTimer, boost = false;
+  const INTERVALS = [0.9, 1.15, 1.5, 2.1, 3.0];
+
+  function thump(f, v, when) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f, when); o.frequency.exponentialRampToValueAtTime(f * .5, when + .18);
+    g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(v, when + .01);
+    g.gain.exponentialRampToValueAtTime(.001, when + .22);
+    o.connect(g); g.connect(ac.destination); o.start(when); o.stop(when + .25);
+  }
+  function flash() { pulse.classList.add("hot"); setTimeout(() => pulse.classList.remove("hot"), 60); }
+  function beat() {
+    if (flat) return;
+    const n = ac.currentTime; thump(60, .7, n); thump(48, .45, n + .2);
+    flash(); setTimeout(flash, 200);
+    beatTimer = setTimeout(beat, (boost ? .38 : INTERVALS[Math.min(step, 4)]) * 1000);
+  }
+  function flatline() {
+    flat = true; clearTimeout(beatTimer);
+    const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
+    o.type = "sine"; o.frequency.value = 880;
+    g.gain.setValueAtTime(.04, n); g.gain.linearRampToValueAtTime(.04, n + 4); g.gain.linearRampToValueAtTime(0, n + 6);
+    o.connect(g); g.connect(ac.destination); o.start(n); o.stop(n + 6.1);
+    vig.style.opacity = 1;
+  }
+
+  /* ---------- start ---------- */
+  const title = document.getElementById("title"), story = document.getElementById("story");
+  function begin() {
+    if (title.classList.contains("off")) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    title.classList.add("off");
+    setTimeout(beat, 1500);
+    const ps = [...story.querySelectorAll("p")];
+    ps.forEach((p, i) => setTimeout(() => p.classList.add("on"), 2500 + i * 2600));
+    setTimeout(() => {                       // the story starts to fade as the words come loose
+      scatter(); arena.classList.add("on"); running = true;
+      story.classList.add("fade");
+    }, 2500 + ps.length * 2600 + 1500);
+  }
+  title.addEventListener("click", begin);
+  title.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") begin(); });
+
+  function scatter() {
+    const aw = arena.clientWidth, ah = arena.clientHeight;
+    W.forEach(o => { o.x = Math.random() * Math.max(10, aw - o.b.offsetWidth); o.y = Math.random() * Math.max(10, ah - o.b.offsetHeight); });
+  }
+
+  /* ---------- the puzzle ---------- */
+  function pick(w, b) {
+    if (flat || !running || frenzy || b.classList.contains("done")) return;
+    if (w === ORDER[step]) {
+      b.classList.add("done"); step++; msg.textContent = "";
+      vig.style.opacity = .3 + step * .13;
+      if (step === ORDER.length) finish();
+    } else fail();
+  }
+  function fail() {
+    try { localStorage.setItem("nl1", (+localStorage.getItem("nl1") || 0) + 1); } catch (e) {}
+    const had = step; step = 0; vig.style.opacity = .3;
+    if (had > 0) { frenzyMode(); return; }      // lost progress: panic
+    W.forEach(o => { o.b.classList.remove("done"); o.a = Math.random() * 6.28; o.s = calm ? 6 : 150; });   // they scatter
+    document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit");
+    msg.textContent = "No.";
+    boost = true; setTimeout(() => boost = false, 1800);
+    setTimeout(() => { msg.textContent = ""; }, 2600);
+  }
+  const shuf = w => [...w].sort(() => Math.random() - .5).join("");
+  function frenzyMode() {
+    frenzy = true; boost = true; vig.style.opacity = .9;
+    document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit");
+    W.forEach(o => { o.b.classList.remove("done"); o.s = calm ? 6 : 320; });
+    chest.classList.add("on"); msg.textContent = "";
+    const iv = setInterval(() => W.forEach(o => {            // the letters will not stay in place
+      o.b.textContent = shuf(o.w); o.a = Math.random() * 6.28; if (!calm) o.s = 320;
+    }), 90);
+    setTimeout(() => {                                        // and then it passes
+      clearInterval(iv); frenzy = false; boost = false; chest.classList.remove("on");
+      W.forEach(o => { o.b.textContent = o.w; o.a = Math.random() * 6.28; });
+      vig.style.opacity = .3;
+    }, 3000);
+  }
+  function finish() {
+    flatline(); running = false;
+    setTimeout(() => {
+      arena.style.display = "none"; msg.textContent = ""; story.style.display = "none";
+      const end = document.getElementById("end"); end.style.display = "block";
+      [...end.querySelectorAll("p")].forEach((p, i) => setTimeout(() => p.classList.add("on"), 300 + i * 2800));
+    }, 2500);
+  }
+
+  /* ---------- motion: floating words + drifting dust ---------- */
+  const cv = document.getElementById("dust"), ctx = cv.getContext("2d");
+  const P = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), s: .2 + Math.random(), r: .5 + Math.random() }));
+  const size = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  addEventListener("resize", size); size();
+
+  let t = 0, last = performance.now();
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+
+    if (running) {
+      const aw = arena.clientWidth, ah = arena.clientHeight;
+      W.forEach(o => {
+        const done = o.b.classList.contains("done");
+        if (!done) {
+          o.s += (base() - o.s) * .02;
+          o.x += Math.cos(o.a) * o.s * dt; o.y += Math.sin(o.a) * o.s * dt;
+          const mx = aw - o.b.offsetWidth, my = ah - o.b.offsetHeight;
+          if (o.x < 0) { o.x = 0; o.a = Math.PI - o.a; } else if (o.x > mx) { o.x = mx; o.a = Math.PI - o.a; }
+          if (o.y < 0) { o.y = 0; o.a = -o.a; } else if (o.y > my) { o.y = my; o.a = -o.a; }
+          o.a += Math.sin(t * .7 + o.r) * .004;           // slow, uneasy curves
         }
-        
-        document.getElementById('answer').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                check();
-            }
-        });
-    </script>
+        const rot = frenzy ? (calm ? 0 : (Math.random() - .5) * 50) : (done || calm) ? 0 : Math.sin(t * .9 + o.r) * 3;
+        o.b.style.transform = `translate(${o.x}px,${o.y}px) rotate(${rot}deg)`;
+      });
+    }
+
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = "rgba(190,190,190,.16)";
+    P.forEach(p => {
+      p.y -= p.s * .00025; p.x += p.s * .00012;
+      if (p.y < -.02) { p.y = 1.02; p.x = Math.random(); }
+      if (p.x > 1.02) p.x = -.02;
+      ctx.fillRect(p.x * cv.width, p.y * cv.height, p.r, p.r);
+    });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
 </body>
 </html>

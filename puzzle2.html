@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>II</title>
+<style>
+  :root { --bg:#000; --fg:#cfcfcf; --dim:#6b6b6b; --red:#8a0000; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); overflow-x:hidden; }
+  body {
+    font-family:"Times New Roman", Times, serif; font-size:19px; line-height:1.7;
+    max-width:34rem; margin:0 auto; padding:10vh 1.4rem 12vh; box-sizing:border-box; position:relative;
+  }
+  canvas { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  main { position:relative; z-index:1; }
+  .fade { opacity:0; animation:show 2.4s forwards; }
+  @keyframes show { to { opacity:1; } }
+
+  h1 { font-size:1.6rem; font-weight:normal; margin:0 0 3rem; animation-delay:.4s; }
+  #why { font-size:3.4rem; font-weight:normal; margin:0 0 1rem; animation-delay:2s; transition:opacity 3s; }
+  .hint { color:var(--dim); font-style:italic; margin:0 0 2.6rem; animation-delay:12s; transition:opacity 3s; }
+
+  #list { animation-delay:5s; }
+  #list button {
+    all:unset; display:block; cursor:pointer; margin:0 0 .55rem; padding:.15rem 0 .15rem 1rem;
+    border-left:1px solid #2a2a2a; color:var(--fg); will-change:transform;
+  }
+  #list button:hover, #list button:focus-visible { color:#fff; border-left-color:#777; }
+  #list button[data-s="ok"] { color:#fff; border-left-color:#fff; cursor:default; }
+  body.solved #list button { color:var(--dim); border-left-color:transparent; cursor:default; transition:color 3s; }
+  body.solved #list button[data-s="ok"] { color:var(--fg); }
+  body.solved #why, body.solved .hint { opacity:0 !important; animation:none; }
+
+  #after { margin-top:3.2rem; opacity:0; transition:opacity 2.5s; }
+  #after.on { opacity:1; }
+  #after p { margin:0 0 1.2rem; }
+  .dim { color:var(--dim); font-style:italic; }
+  #go { opacity:0; transition:opacity 2s; color:var(--fg); text-underline-offset:4px; }
+  #go.on { opacity:1; }
+  #go:hover, #go:focus-visible { color:#fff; }
+
+  body.gust main { animation:gust .5s steps(3,end); }
+  body.gust { background:#1a0000; }
+  @keyframes gust { 0%{transform:translateX(0)} 25%{transform:translateX(-10px)} 50%{transform:translateX(8px)} 75%{transform:translateX(-5px)} 100%{transform:translateX(0)} }
+  @media (prefers-reduced-motion:reduce) {
+    .fade { animation-duration:.01s; animation-delay:0s !important; }
+    body.gust main { animation:none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="dust"></canvas>
+<main>
+  <h1 class="fade">II</h1>
+  <h2 id="why" class="fade">Why?</h2>
+  <p class="hint fade">He cried. He feared. Something was left.</p>
+  <div id="list" class="fade" role="list"></div>
+  <p id="msg" class="dim" role="status"></p>
+
+  <div id="after">
+    <p>I don't know how much longer I can bear it.</p>
+    <p>Ever since you&hellip;</p>
+    <p class="dim">- X</p>
+    <a id="go" href="puzzle3.html">continue</a>
+  </div>
+</main>
+
+<script>
+  // Any order. Three are true, seven are not.
+  const GOOD = ["nightmare", "tears", "corpse"];
+  const BAD  = ["dream", "blood", "sleep", "shadow", "silence", "bed", "hope"];
+
+  const list = document.getElementById("list");
+  const items = [...GOOD, ...BAD].sort(() => Math.random() - .5).map(w => {
+    const b = document.createElement("button");
+    b.textContent = w;
+    b.dataset.w = w; b.setAttribute("role", "listitem");
+    b.addEventListener("click", () => tap(b));
+    list.appendChild(b);
+    return b;
+  });
+
+  let fails = 0, found = 0, solved = false, wind = 0.3;
+  const target = () => solved ? 0 : Math.min(1.4, 0.3 + fails * 0.15);
+
+  function tap(b) {
+    if (solved || b.dataset.s) return;
+    startAudio();
+    if (GOOD.includes(b.dataset.w)) {
+      b.dataset.s = "ok";
+      if (++found === GOOD.length) solve();
+    } else {
+      fails++;
+      try { localStorage.setItem("nl2", (+localStorage.getItem("nl2") || 0) + 1); } catch (e) {}
+      wind = Math.min(wind + 0.3, 1.6);          // the wind jumps, then settles at the new level
+      document.body.classList.add("gust");
+      setTimeout(() => document.body.classList.remove("gust"), 500);
+    }
+  }
+
+  function solve() {
+    solved = true; document.body.classList.add("solved");
+    // the false words fade, the true ones become full sentences
+    setTimeout(() => items.forEach(b => { if (b.dataset.s !== "ok") b.style.opacity = 0; }), 2500);
+    setTimeout(() => {
+      items.forEach(b => { if (b.dataset.s !== "ok") b.style.display = "none"; });
+      items.filter(b => b.dataset.s === "ok").forEach(b => {
+        b.style.transition = "opacity 1.5s"; b.style.opacity = 0;
+        setTimeout(() => { b.textContent = "The wind wheezed beneath his " + b.dataset.w + "."; b.style.opacity = 1; }, 1600);
+      });
+    }, 5000);
+    setTimeout(() => document.getElementById("after").classList.add("on"), 11000);
+    setTimeout(() => document.getElementById("go").classList.add("on"), 17000);
+  }
+
+  /* ---------- wind sound (generated, no files) ---------- */
+  let ac, gain;
+  function startAudio() {
+    if (ac) { if (ac.state === "suspended") ac.resume(); return; }
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 520; f.Q.value = 0.8;
+    gain = ac.createGain(); gain.gain.value = 0;
+    const lfo = ac.createOscillator(); lfo.frequency.value = 0.18;
+    const lg = ac.createGain(); lg.gain.value = 260;
+    lfo.connect(lg); lg.connect(f.frequency);
+    src.connect(f); f.connect(gain); gain.connect(ac.destination);
+    src.start(); lfo.start();
+  }
+  // Start on the very first touch anywhere, so the wind is already there.
+  addEventListener("pointerdown", startAudio, { once: true });
+
+  /* ---------- dust + movement ---------- */
+  const cv = document.getElementById("dust"), ctx = cv.getContext("2d");
+  const P = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), s: .3 + Math.random() * 1.2, r: .4 + Math.random() * 1.1, p: Math.random() * 6 }));
+  const size = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  addEventListener("resize", size); size();
+
+  let t = 0;
+  function frame() {
+    t += 0.016;
+    wind += (target() - wind) * 0.02;
+    if (gain) gain.gain.setTargetAtTime(Math.min(0.9, wind * 0.5), ac.currentTime, 0.4);
+
+    items.forEach((b, i) => {
+      const x = Math.sin(t * (.6 + i * .13) + i) * wind * 12 + (Math.random() - .5) * wind * 2.4;
+      const y = Math.cos(t * (.5 + i * .11) + i * 2) * wind * 5 + (Math.random() - .5) * wind * 1.4;
+      b.style.transform = `translate(${x}px,${y}px)`;
+    });
+
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = `rgba(190,190,190,${.08 + Math.min(wind, 1) * .3})`;
+    P.forEach(p => {
+      p.x += p.s * (.00005 + wind * .004); p.p += .01;
+      if (p.x > 1.05) { p.x = -.05; p.y = Math.random(); }
+      ctx.fillRect(p.x * cv.width, (p.y + Math.sin(p.p) * .01 * wind) * cv.height, p.r * (1 + wind * 9), p.r);
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
+</script>
+</body>
+</html>
