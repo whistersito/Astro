@@ -14,7 +14,7 @@
   button { all:unset; cursor:pointer; }
   #noise { position:fixed; inset:0; width:100%; height:100%; z-index:30; pointer-events:none; mix-blend-mode:overlay; image-rendering:pixelated; opacity:.1; }
   #vig { position:fixed; inset:0; z-index:29; pointer-events:none; background:radial-gradient(ellipse at center, transparent 40%, #000 105%); opacity:.5; }
-  #wake { position:fixed; inset:0; z-index:60; background:#000; display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer; transition:opacity 2.5s; padding:1.4rem; }
+  #wake { position:fixed; inset:0; z-index:60; background:#000; display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer; transition:opacity 2.5s; padding:1.4rem[...]
   #wake p { margin:.4rem 0; } #wake .a { color:var(--fg); animation:bl 3s ease-in-out infinite; } #wake .b { color:var(--dim); font-size:.85rem; }
   @keyframes bl { 50% { opacity:.3; } } #wake.off { opacity:0; pointer-events:none; }
 
@@ -22,6 +22,10 @@
   #hud { display:flex; justify-content:space-between; align-items:center; gap:.8rem; color:var(--dim); font-size:.85rem; padding:.2rem 0 .6rem; }
   #hud b { font-weight:normal; color:#cfcfcf; } #en { letter-spacing:.2em; color:#cfcfcf; }
   #nbtn { border:1px solid #2a2a2a; padding:.15rem .7rem; color:var(--dim); } #nbtn:hover { color:#fff; border-color:#666; }
+  /* Visual improvements for the skip button */
+  #skipbtn { border:1px solid #3a3a3a; padding:.15rem .7rem; color:var(--fg); background:linear-gradient(180deg,#0f0f0f,#000); border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,.6); transition:transform .12s, box-shadow .12s, color .12s; }
+  #skipbtn::before { content:"⏭\00a0"; }
+  #skipbtn:hover { transform:translateY(-1px); box-shadow:0 6px 12px rgba(0,0,0,.6); color:#fff; border-color:#666; }
 
   #stage { position:relative; width:100%; aspect-ratio:800/480; background:#060606; overflow:hidden; touch-action:none; border:1px solid #111; user-select:none; -webkit-user-select:none; }
   #room { position:absolute; inset:0; width:100%; height:100%; }
@@ -44,7 +48,7 @@
   #cl, #nb { position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.94); display:flex; align-items:center; justify-content:center; padding:1.4rem; box-sizing:border-box; }
   #cl[hidden], #nb[hidden] { display:none; }
   .card { max-width:30rem; width:100%; text-align:center; }
-  .card .t { color:var(--dim); letter-spacing:.3em; font-size:.8rem; } .card .big { font-size:4.4rem; line-height:1.2; margin:1rem 0 .4rem; color:#fff; text-shadow:0 0 14px rgba(255,255,255,.25); word-break:break-all; }
+  .card .t { color:var(--dim); letter-spacing:.3em; font-size:.8rem; } .card .big { font-size:4.4rem; line-height:1.2; margin:1rem 0 .4rem; color:#fff; text-shadow:0 0 14px rgba(255,255,255,.25); [...]
   .card p { margin:.3rem 0; } .card .d { color:var(--dim); font-style:italic; }
   .go { color:var(--fg); text-decoration:underline; text-underline-offset:4px; display:inline-block; margin-top:1.4rem; }
   #nb .card { text-align:left; } #nbh { color:var(--dim); font-style:italic; margin:0 0 .8rem; }
@@ -52,11 +56,11 @@
   #ta:focus { border-color:#555; }
   #wheels { display:flex; justify-content:center; gap:.6rem; margin:1rem 0; }
   #wheels button { width:48px; height:64px; line-height:64px; text-align:center; font-size:2rem; background:#000; border:1px solid #555; color:#e6dcc0; user-select:none; }
-  #ncard { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .8s; text-align:center; padding:1.4rem; }
+  #ncard { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity[...]
   #ncard.on { opacity:1; pointer-events:auto; } #ncard .n { font-size:2.2rem; color:#fff; letter-spacing:.2em; } #ncard .s { color:var(--dim); margin-top:.8rem; }
   #flash { position:fixed; inset:0; z-index:55; background:#000; display:none; align-items:center; justify-content:center; pointer-events:none; }
   #flash i { position:relative; width:min(60vw,300px); height:min(92vh,780px); border:2px solid #ddd; border-radius:50% 50% 6px 6px / 16% 16% 0 0; background:#000; }
-  #flash i::before { content:""; position:absolute; left:28%; top:12%; width:44%; height:5%; background:radial-gradient(circle at 20% 50%, #fff 0 6px, transparent 7px), radial-gradient(circle at 80% 50%, #fff 0 6px, transparent 7px); }
+  #flash i::before { content:""; position:absolute; left:28%; top:12%; width:44%; height:5%; background:radial-gradient(circle at 20% 50%, #fff 0 6px, transparent 7px), radial-gradient(circle at 8[...]
   body.hit { animation:hit .5s steps(2,end); } @keyframes hit { 0%,100% { background:#000; } 30% { background:#1a0000; } }
   .voice { position:fixed; z-index:28; pointer-events:none; opacity:0; color:#555; }
   @media (prefers-reduced-motion:reduce) { body.hit { animation:none; } }
@@ -70,16 +74,16 @@
 <div id="ncard"><div class="n" id="ntxt"></div><div class="s" id="nsub"></div></div>
 
 <main id="game">
-  <div id="hud"><span>NIGHT <b id="night">141</b></span><span id="clk">4:12</span><span id="en"></span><button id="nbtn">notebook</button></div>
+  <div id="hud"><span>NIGHT <b id="night">141</b></span><span id="clk">4:12</span><span id="en"></span><div style="display:flex;gap:.4rem;align-items:center"><button id="skipbtn" title="Skip this night (use sparingly)">skip night</button><button id="nbtn">notebook</button></div></div>
   <div id="stage">
     <svg id="room" viewBox="0 0 800 480">
       <line x1="0" y1="390" x2="800" y2="390"/>
-      <g id="o-fridge"><rect x="30" y="140" width="80" height="250"/><line x1="30" y1="262" x2="110" y2="262"/><rect x="97" y="190" width="5" height="42"/><rect x="97" y="286" width="5" height="42"/></g>
+      <g id="o-fridge"><rect x="30" y="140" width="80" height="250"/><line x1="30" y1="262" x2="110" y2="262"/><rect x="97" y="190" width="5" height="42"/><rect x="97" y="286" width="5" height="42[...]
       <g id="o-tv"><rect x="140" y="250" width="120" height="75"/><rect x="150" y="258" width="100" height="59"/><rect x="165" y="325" width="70" height="65"/></g>
       <g id="o-safe"><rect x="290" y="335" width="60" height="55"/><circle cx="320" cy="362" r="10"/></g>
       <g id="o-window"><rect x="390" y="80" width="100" height="130"/><line x1="440" y1="80" x2="440" y2="210"/><line x1="390" y1="145" x2="490" y2="145"/></g>
       <g id="o-mirror"><ellipse cx="560" cy="200" rx="42" ry="72"/><ellipse cx="560" cy="200" rx="34" ry="64"/></g>
-      <g id="o-calendar"><rect x="620" y="110" width="60" height="80"/><line x1="620" y1="128" x2="680" y2="128"/><line x1="620" y1="146" x2="680" y2="146"/><line x1="620" y1="164" x2="680" y2="164"/><line x1="640" y1="128" x2="640" y2="190"/><line x1="660" y1="128" x2="660" y2="190"/></g>
+      <g id="o-calendar"><rect x="620" y="110" width="60" height="80"/><line x1="620" y1="128" x2="680" y2="128"/><line x1="620" y1="146" x2="680" y2="146"/><line x1="620" y1="164" x2="680" y2="16[...]
       <g id="o-clock"><rect x="710" y="90" width="64" height="30"/><text x="720" y="112">4:12</text></g>
       <g id="o-bed"><rect x="400" y="335" width="190" height="55"/><rect x="406" y="318" width="46" height="18"/></g>
       <g id="o-phone"><rect x="650" y="345" width="90" height="45"/><rect x="680" y="331" width="22" height="14"/></g>
@@ -90,7 +94,7 @@
 </main>
 
 <div id="cl" hidden><div class="card" id="clc"></div></div>
-<div id="nb" hidden><div class="card"><p id="nbh"></p><textarea id="ta" placeholder="write what you saw. it is the only thing that remembers." spellcheck="false"></textarea><button id="nbc" class="go">close</button></div></div>
+<div id="nb" hidden><div class="card"><p id="nbh"></p><textarea id="ta" placeholder="write what you saw. it is the only thing that remembers." spellcheck="false"></textarea><button id="nbc" class=[...]
 
 <script>
   const $ = id => document.getElementById(id);
@@ -139,7 +143,7 @@
     o.connect(g); g.connect(ac.destination); o.start(n); o.stop(n + dur + .05);
   }
   function glitch(v = .5, dur = .25) {
-    if (!ac) return; v = Math.min(v, REAL_SCARE ? .9 : .6); const n = ac.currentTime, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    if (!ac) return; v = Math.min(v, REAL_SCARE ? .9 : .6); const n = ac.currentTime, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0[...]
     for (let i = 0; i < len; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / len); if (i % 37 < 6) d[i] *= 3; }
     const src = ac.createBufferSource(); src.buffer = buf; const ws = ac.createWaveShaper(), c = new Float32Array(256);
     for (let i = 0; i < 256; i++) c[i] = Math.tanh((i / 128 - 1) * 6); ws.curve = c;
@@ -185,7 +189,7 @@
   }
   let blackout = false;
   const FAKES = [
-    async () => { setVol(0); blackout = true; await sleep(1500); blackout = false; if (Math.random() < .35) tone("sine", 60, 30, .3, .35); setVol(.9); },   // the silence before something. then nothing.
+    async () => { setVol(0); blackout = true; await sleep(1500); blackout = false; if (Math.random() < .35) tone("sine", 60, 30, .3, .35); setVol(.9); },   // the silence before something. then n[...]
     async () => { const w = $("wf"); w.style.opacity = 1; glitch(.2, .1); await sleep(130); w.style.opacity = 0; },                                      // someone in the window
     async () => { whisper(); },
     async () => { stat = 1; glitch(.3, .15); await sleep(160); }
@@ -223,8 +227,8 @@
   /* ---------- the safe ---------- */
   const dig = [0, 0, 0, 0, 0];
   function openSafe() {
-    $("clc").innerHTML = `<div class="t">SAFE</div><div id="wheels"></div><p class="d">five numbers. it does not say in which order.</p><button class="go" id="try">open</button> &nbsp; <button class="go" id="clx">back</button><p id="sm" style="color:var(--red);min-height:1.6em"></p>`;
-    const w = $("wheels"); dig.forEach((d, i) => { const b = document.createElement("button"); b.textContent = d; b.onclick = () => { dig[i] = (dig[i] + 1) % 10; b.textContent = dig[i]; tone("square", 1200, 700, .02, .03); }; w.appendChild(b); });
+    $("clc").innerHTML = `<div class="t">SAFE</div><div id="wheels"></div><p class="d">five numbers. it does not say in which order.</p><button class="go" id="try">open</button> &nbsp; <button cl[...]
+    const w = $("wheels"); dig.forEach((d, i) => { const b = document.createElement("button"); b.textContent = d; b.onclick = () => { dig[i] = (dig[i] + 1) % 10; b.textContent = dig[i]; tone("squ[...]
     $("cl").hidden = false; paused = true; $("clx").onclick = closeCl;
     $("try").onclick = () => {
       if (dig.join("") === CODE) { closeCl(); win(); return; }
@@ -236,14 +240,24 @@
   const ta = $("ta"); ta.value = (() => { try { return localStorage.getItem("nl7notes") || ""; } catch (e) { return ""; } })();
   ta.addEventListener("input", () => { try { localStorage.setItem("nl7notes", ta.value); } catch (e) {} });
   function hints() {
-    const h = ["Nothing is different."]; if (night >= 144) h.push("One thing changes each night."); if (night >= 147) h.push("The light flinches near it."); if (night >= 152) h.push("Left to right.");
+    const h = ["Nothing is different."]; if (night >= 144) h.push("One thing changes each night."); if (night >= 147) h.push("The light flinches near it."); if (night >= 152) h.push("Left to righ[...]
     $("nbh").innerHTML = h.join("<br>");
   }
-  $("nbtn").onclick = () => { if (!booted || ending || solved || !$("cl").hidden) return; hints(); $("nb").hidden = false; paused = true; };
+  $("nbtn").onclick = () => { if (!booted || ending || solved || $("cl").hidden === false) return; hints(); $("nb").hidden = false; paused = true; };
   $("nbc").onclick = () => { $("nb").hidden = true; paused = false; };
 
+  // Skip button handler: visually improved and guarded
+  $("skipbtn").onclick = () => {
+    if (!booted || ending || solved) { say("Can't skip right now."); return; }
+    try {
+      if (!confirm || confirm("Skip this night?")) {
+        say("Skipping night..."); glitch(.25, .12); endNight();
+      }
+    } catch (e) { /* ignore */ }
+  };
+
   /* ---------- nights ---------- */
-  async function card(n, s, ms = 2600) { $("ntxt").textContent = n; $("nsub").textContent = s || ""; $("ncard").classList.add("on"); await sleep(ms); $("ncard").classList.remove("on"); await sleep(800); }
+  async function card(n, s, ms = 2600) { $("ntxt").textContent = n; $("nsub").textContent = s || ""; $("ncard").classList.add("on"); await sleep(ms); $("ncard").classList.remove("on"); await slee[...]
   async function intro() {
     const d = new Date(), t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), at412 = d.getHours() === 4 && Math.abs(d.getMinutes() - 12) <= 2;
     await card("NIGHT " + night, at412 ? "It is 4:12 where you are, too. I did not plan that." : `It is ${t} where you are. In here it is 4:12.`, 4200);
@@ -265,10 +279,10 @@
   async function win() {
     solved = true; paused = true; setVol(.35); try { localStorage.setItem("nlp7", "1"); } catch (e) {}
     $("ncard").classList.add("on"); const n = $("ntxt"), s = $("nsub"); n.textContent = ""; s.textContent = "";
-    const lines = ["The safe opens.", "Inside: nothing. The same nothing as every night.", "He lies down.", "The clock changes: 4:12 becomes 4:13.", "Nothing happens.", "Night " + (night + 1) + "."];
+    const lines = ["The safe opens.", "Inside: nothing. The same nothing as every night.", "He lies down.", "The clock changes: 4:12 becomes 4:13.", "Nothing happens.", "Night " + (night + 1) + "[...]"];
     for (const l of lines) { n.style.fontSize = "1.2rem"; n.textContent = l; tone("sine", 220, 220, .05, 1.5); await sleep(3200); }
     $("clk").textContent = "4:13";
-    n.innerHTML = ""; s.innerHTML = `Mistakes so far: ${["nl1","nl2","nl3","nl4","nl5","nl6","nl7"].reduce((a, k) => a + get(k), 0)}.<br><br><span class="go" id="next" style="cursor:pointer">continue</span>`;
+    n.innerHTML = ""; s.innerHTML = `Mistakes so far: ${["nl1","nl2","nl3","nl4","nl5","nl6","nl7"].reduce((a, k) => a + get(k), 0)}.<br><br><span class="go" id="next" style="cursor:pointer">cont[...]`;
     $("next").onclick = () => { document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle8.html", 2100); };
   }
 
@@ -283,7 +297,7 @@
       const o = OBJ[changed()], d = Math.hypot(lx - o.cx * sc, ly - o.cy * sc);
       if (d < R * 1.05) { flinch = true; R *= .5 + Math.random() * .7; flT += dt; if (flT > .3) { flT = 0; tone("square", 90, 55, .018, .06); } }
     }
-    Object.keys(CHG).forEach(k => { const g = $("o-" + k); g.style.transform = (flinch && k === changed() && !calm) ? `translate(${(Math.random() - 1) * 3}px,${(Math.random() - .5) * 2}px)` : ""; });
+    Object.keys(CHG).forEach(k => { const g = $("o-" + k); g.style.transform = (flinch && k === changed() && !calm) ? `translate(${(Math.random() - 1) * 3}px,${(Math.random() - .5) * 2}px)` : "";[...]
     if (blackout) R = 0;
     stage.style.setProperty("--x", lx + "px"); stage.style.setProperty("--y", ly + "px"); stage.style.setProperty("--r", R + "px");
 
@@ -322,7 +336,7 @@
     buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
     if (buf !== CODE) return; buf = "";
     const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
-    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlnam[...]
     document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
   });
 })();
