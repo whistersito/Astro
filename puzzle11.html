@@ -1,37 +1,79 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>puzzle11</title>
   <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-    }
+    :root{--bg:#071218}
+    html,body{height:100%;margin:0;background:var(--bg);display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
 
-    body {
-      position: relative;
-    }
+    /* viewport-safe centered player box */
+    .player-wrap{width:min(1100px,94vw);height:auto;aspect-ratio:16/9;background:#000;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.6);overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
 
-    video {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      background: #000;
-      filter: saturate(0.8) contrast(1.06) brightness(0.68);
-    }
+    video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+
+    /* subtle vignette overlay to match the game's look */
+    .overlay{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,0.06),rgba(0,0,0,0.24));}
+
+    /* play button shown if autoplay is blocked */
+    .play-btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;display:none;align-items:center;justify-content:center;gap:.6rem;background:rgba(0,0,0,0.6);color:#fff;padding:.6rem 1rem;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,0.06)}
+    .play-btn:hover{background:rgba(0,0,0,0.8)}
+
+    .fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ddd;padding:1rem;text-align:center;background:#000}
+    .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+    @media (max-width:520px){ .player-wrap{width:calc(100vw - 28px);aspect-ratio:16/9;border-radius:4px} .play-btn{padding:.5rem .8rem} }
   </style>
 </head>
 <body>
-  <video autoplay muted loop playsinline>
-    <source src="videoplayback.mp4" type="video/mp4" />
-  </video>
+  <main class="player-wrap" role="main" aria-label="Reproductor de fondo">
+    <video id="bgvideo" playsinline autoplay muted loop preload="metadata" aria-label="video de fondo" tabindex="-1">
+      <source src="videoplayback.mp4" type="video/mp4">
+      Su navegador no soporta vídeo HTML5.
+    </video>
+
+    <div class="overlay" aria-hidden="true"></div>
+
+    <button id="play" class="play-btn" aria-label="Reproducir vídeo">Reproducir</button>
+
+    <div id="fallback" class="fallback" hidden>
+      <div>
+        <p style="margin:0 0 .6rem;font-weight:600">No se pudo cargar <strong>videoplayback.mp4</strong></p>
+        <p style="margin:0;color:#a9b2b8;font-size:.95rem">Sube el archivo <code>videoplayback.mp4</code> a la raíz del repositorio para que se reproduzca aquí.</p>
+      </div>
+    </div>
+
+    <span class="visually-hidden">Escena final: reproducción en el recuadro central</span>
+  </main>
+
+  <script>
+    const v = document.getElementById('bgvideo');
+    const fb = document.getElementById('fallback');
+    const playBtn = document.getElementById('play');
+
+    let timedOut = false; const timeout = setTimeout(() => { timedOut = true; showFallback(); }, 2200);
+
+    function showFallback(){ try{ v.pause(); v.style.display = 'none'; fb.hidden = false; playBtn.style.display = 'none'; }catch(e){ fb.hidden=false }}
+
+    v.addEventListener('loadeddata', () => {
+      clearTimeout(timeout);
+      if (!timedOut) { fb.hidden = true; v.style.display='block'; }
+    }, { once:true });
+
+    v.addEventListener('error', () => { clearTimeout(timeout); showFallback(); }, { once:true });
+
+    (async function tryPlay(){
+      try{ await v.play(); playBtn.style.display='none'; }
+      catch(e){ /* autoplay blocked: show play button */ playBtn.style.display='flex'; }
+    })();
+
+    playBtn.addEventListener('click', async () => {
+      try{ await v.play(); playBtn.style.display='none'; fb.hidden = true; }
+      catch(e){ /* still blocked */ }
+    });
+
+    // If user navigates away/resizes, keep aspect visually centered by CSS; nothing else required
+  </script>
 </body>
 </html>
