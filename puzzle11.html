@@ -6,9 +6,8 @@
   <title>puzzle11</title>
   <style>
     :root {
-      --bg-1: #0d1722;
-      --bg-2: #1c2d3d;
-      --bg-3: #2b3944;
+      --bg-1: #070d12;
+      --bg-2: #121c27;
     }
 
     html, body {
@@ -20,70 +19,33 @@
     }
 
     body {
-      display: block;
-      background:
-        radial-gradient(circle at 50% 20%, rgba(72, 90, 108, 0.75), rgba(9, 13, 18, 0.2) 35%, rgba(7, 10, 15, 0.92) 100%),
-        linear-gradient(to bottom, var(--bg-2), var(--bg-1));
+      position: relative;
+      background: radial-gradient(circle at 50% 18%, rgba(55, 75, 90, 0.6), rgba(7, 13, 18, 0.1) 35%, rgba(7, 13, 18, 0.9) 100%);
     }
 
-    .art {
+    #bg {
       position: fixed;
       inset: 0;
-      background-image: url("puzzle11-reference.jpg");
-      background-size: cover;
-      background-position: center center;
-      background-repeat: no-repeat;
-      filter: saturate(0.8) contrast(1.12) brightness(0.82);
-      transform: scale(1.02);
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: linear-gradient(to bottom, var(--bg-2), var(--bg-1));
+      filter: saturate(0.8) contrast(1.08) brightness(0.72);
     }
 
-    .art::before {
+    #bg::before {
       content: "";
       position: absolute;
       inset: 0;
-      background:
-        linear-gradient(to bottom, rgba(0,0,0,0.12), rgba(0,0,0,0.28)),
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06), transparent 60%);
+      background: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.28));
       pointer-events: none;
-    }
-
-    .fallback {
-      position: fixed;
-      inset: 0;
-      background:
-        linear-gradient(to bottom, rgba(15,23,31,0.35) 0%, rgba(10,14,18,0.6) 100%),
-        radial-gradient(circle at 50% 55%, rgba(255,255,255,0.12), rgba(255,255,255,0) 35%),
-        linear-gradient(180deg, #0c1720 0%, #243743 42%, #0b1117 100%);
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .art:not([style*="background-image"]) {
-      opacity: 0;
-    }
-
-    .fallback.visible {
-      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <div class="art" aria-label="Final eerie figure in field scene" role="img"></div>
-  <div class="fallback visible" aria-hidden="true"></div>
-
-  <script>
-    const art = document.querySelector('.art');
-    const fallback = document.querySelector('.fallback');
-
-    const img = new Image();
-    img.onload = () => {
-      art.style.backgroundImage = 'url("puzzle11-reference.jpg")';
-      fallback.classList.remove('visible');
-    };
-    img.onerror = () => {
-      fallback.classList.add('visible');
-    };
-    img.src = 'puzzle11-reference.jpg';
-  </script>
+  <video id="bg" autoplay muted loop playsinline>
+    <source src="videoplayback.mp4" type="video/mp4" />
+  </video>
 </body>
 </html>
