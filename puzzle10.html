@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#000000"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E"><title>X</title><style>
+:root{--fg:#bdbdbd;--dim:#5e5e5e;--red:#9a3a3a;--gold:#f0d9a6}
+html{-webkit-tap-highlight-color:transparent}html,body{margin:0;background:#000;color:var(--fg)}
+body{font-family:"Courier New",Courier,monospace;font-size:15px;line-height:1.6;transition:opacity 2s;overflow-x:hidden;touch-action:manipulation}
+button{all:unset;cursor:pointer}
+#noise{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;mix-blend-mode:overlay;image-rendering:pixelated;opacity:.1}
+#vig{position:fixed;inset:0;z-index:29;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,#000 105%);opacity:.55;transition:opacity .3s}
+#wake{position:fixed;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:opacity 2.5s;padding:1.4rem}
+#wake .a{animation:bl 3s ease-in-out infinite}#wake .b{color:var(--dim);font-size:.85rem}@keyframes bl{50%{opacity:.3}}#wake.off{opacity:0;pointer-events:none}
+.wrap{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:2.5vh 1rem 12vh;box-sizing:border-box}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:.8rem;color:var(--dim);font-size:.85rem;border-bottom:1px solid #1a1a1a;padding-bottom:.4rem;margin-bottom:1rem}
+.hbtn{border:1px solid #2a2a2a;padding:.1rem .7rem;color:var(--dim)}.hbtn:hover{color:#fff;border-color:#666}
+.dim{color:var(--dim)}.err{color:var(--red)}.ok{color:var(--gold)}
+.go{color:var(--fg);text-decoration:underline;text-underline-offset:4px;display:inline-block;margin-top:1rem;cursor:pointer}
+#msg{min-height:1.7em;color:var(--red);text-align:center;margin:.6rem 0}#cap{min-height:3.4em;color:var(--dim);font-style:italic;text-align:center;margin:.4rem 0}
+#frag,#memp{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;padding:1.4rem;box-sizing:border-box;overflow-y:auto}
+#frag[hidden],#memp[hidden]{display:none}.card{max-width:32rem;width:100%}.card p{margin:.7rem 0}
+body.hit{animation:hit .5s steps(2,end)}@keyframes hit{0%,100%{background:#000}30%{background:#1a0000}}
+.voice{position:fixed;z-index:28;pointer-events:none;opacity:0;color:#555}
+.wheels{display:flex;justify-content:center;gap:.6rem;margin:1rem 0}.wheels button{width:48px;height:64px;line-height:64px;text-align:center;font-size:2rem;background:#000;border:1px solid #555;color:#e6dcc0;user-select:none}
+@media (prefers-reduced-motion:reduce){body.hit{animation:none}}
+
+#tub{position:relative;width:min(92%,420px);height:230px;margin:1rem auto;border:2px solid #555;border-radius:6px 6px 60px 60px;overflow:hidden;background:#050505}
+#water{position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(#0d171c,#04080a);transition:height .25s linear}
+#water::before{content:"";position:absolute;left:-10%;right:-10%;top:-6px;height:12px;background:radial-gradient(ellipse at center,#16252c 0,transparent 70%);animation:wv 3s ease-in-out infinite alternate}
+@keyframes wv{to{transform:translateX(8%)}}
+.ph{position:absolute;width:34%;padding:4px;font-size:.55rem;line-height:1.2;color:#9a9a9a;background:#101010;border:1px solid #2a2a2a;animation:bob 4s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-8px) rotate(3deg)}}
+#boy{position:absolute;left:50%;bottom:8px;width:44px;height:50px;margin-left:-22px;opacity:0;transition:opacity 3s}#boy.on{opacity:1}
+#boy::before{content:"";position:absolute;left:8px;top:0;width:22px;height:22px;border-radius:50%;background:#000;box-shadow:0 0 0 1px #777}
+#boy::after{content:"";position:absolute;left:0;right:0;top:20px;bottom:0;border-radius:22px 22px 6px 6px;background:#000;box-shadow:0 0 0 1px #777}
+#lvl{text-align:center;color:var(--dim)}
+#valves{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;max-width:380px;margin:1rem auto}
+#valves button{border:1px solid #555;border-radius:50%;width:92px;height:92px;line-height:92px;text-align:center;margin:0 auto;color:#ddd;font-size:.85rem;user-select:none;touch-action:manipulation}
+#valves button:hover{border-color:#aaa}#valves button.open{border-color:var(--gold);color:var(--gold);cursor:default}
+</style></head><body><noscript><p style="padding:2rem">This needs JavaScript to run.</p></noscript>
+<canvas id="noise" width="96" height="96"></canvas><div id="vig"></div>
+<div id="wake"><div><p class="a">tap to begin</p><p class="b">headphones. water, and the dark.</p></div></div>
+<div id="frag" hidden><div class="card" id="fc"></div></div><div id="memp" hidden><div class="card" id="mc"></div></div>
+
+<main class="wrap">
+  <div class="hud"><span>X &middot; THE BATH</span><span id="lvl">water 55%</span><button id="memb" class="hbtn">memories</button></div>
+  <p id="cap">The tub is filling. Turn the valves in the order he cut them off.</p>
+  <div id="tub"><div id="water"></div><div id="boy"></div></div>
+  <div id="valves"><button data-v="friends">friends</button><button data-v="doctor">doctor</button><button data-v="family">family</button><button data-v="work">work</button></div>
+  <p id="msg" role="status"></p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const get=k=>{try{return +localStorage.getItem(k)||0}catch(e){return 0}};
+const bump=k=>{try{localStorage.setItem(k,get(k)+1)}catch(e){}};
+const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+let ac,booted=false,stat=0,last=performance.now();
+function tone(type,f0,f1,v,dur){if(!ac)return;const n=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f0,n);o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),n+dur);g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+.005);g.gain.exponentialRampToValueAtTime(.001,n+dur);o.connect(g);g.connect(ac.destination);o.start(n);o.stop(n+dur+.05)}
+function glitch(v=.5,dur=.25){if(!ac)return;v=Math.min(v,.6);const n=ac.currentTime,len=Math.floor(ac.sampleRate*dur),buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++){d[i]=(Math.random()*2-1)*(1-i/len);if(i%37<6)d[i]*=3}const src=ac.createBufferSource();src.buffer=buf;const ws=ac.createWaveShaper(),c=new Float32Array(256);for(let i=0;i<256;i++)c[i]=Math.tanh((i/128-1)*6);ws.curve=c;const f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=700+Math.random()*2400;f.Q.value=.9;const g=ac.createGain();g.gain.value=v*.5;src.connect(f);f.connect(ws);ws.connect(g);g.connect(ac.destination);src.start(n);tone("sawtooth",140+Math.random()*80,40,v*.16,dur)}
+const jolt=()=>{glitch(.7,.28);try{navigator.vibrate&&navigator.vibrate([40,30,40])}catch(e){}document.body.classList.remove("hit");void document.body.offsetWidth;document.body.classList.add("hit")};
+const say=(t,ms=2600)=>{$("msg").textContent=t;setTimeout(()=>{if($("msg").textContent===t)$("msg").textContent=""},ms)};
+const cap=t=>{$("cap").textContent=t};
+const nctx=$("noise").getContext("2d"),img=nctx.createImageData(96,96);
+setInterval(()=>{for(let i=0;i<img.data.length;i+=4){const v=Math.random()*255;img.data[i]=img.data[i+1]=img.data[i+2]=v;img.data[i+3]=255}nctx.putImageData(img,0,0);stat=Math.max(0,stat-.02);$("noise").style.opacity=.05+stat*.5},90);
+function mkBuf(brown){const len=ac.sampleRate*3,b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.5}else d[i]=w}return b}
+function loop(buf,type,f,q,g){const s=ac.createBufferSource();s.buffer=buf;s.loop=true;const fl=ac.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;const gn=ac.createGain();gn.gain.value=g;s.connect(fl);fl.connect(gn);gn.connect(ac.destination);s.start();return gn}
+function whisper(t){if(calm)return;const e=document.createElement("span");e.className="voice";e.textContent=t;e.style.left=Math.random()*70+"%";e.style.top=Math.random()*85+"%";e.style.fontSize=(1+Math.random()*1.5)+"rem";document.body.appendChild(e);glitch(.1,.12);e.animate([{opacity:0},{opacity:.6},{opacity:0}],{duration:1400}).onfinish=()=>e.remove()}
+const MEM=()=>{try{return JSON.parse(localStorage.getItem("nlmem")||"[]")}catch(e){return[]}};
+function addMem(id,t){const m=MEM();if(m.find(x=>x.id===id))return;m.push({id,t});try{localStorage.setItem("nlmem",JSON.stringify(m))}catch(e){}}
+$("memb").onclick=()=>{if(!booted)return;const m=MEM();$("mc").innerHTML='<div class="dim">MEMORIES</div>'+(m.length?m.map(x=>"<p>"+x.t+"</p>").join(""):'<p class="dim">nothing yet.</p>')+'<span class="go" id="memx">close</span>';$("memp").hidden=false;$("memx").onclick=()=>{$("memp").hidden=true}};
+async function showFrag(title,lines,after){const f=$("frag"),c=$("fc");c.innerHTML='<div class="dim">'+title+"</div>";f.hidden=false;for(const l of lines){const p=document.createElement("p");p.textContent=l;p.style.opacity=0;p.style.transition="opacity 1.6s";c.appendChild(p);void p.offsetWidth;p.style.opacity=1;tone("sine",196,196,.04,1.4);await sleep(calm?500:2300)}const b=document.createElement("span");b.className="go";b.textContent="continue";b.onclick=()=>{f.hidden=true;after&&after()};c.appendChild(b)}
+const leave=u=>{document.body.style.opacity=0;setTimeout(()=>location.href=u,2100)};
+function wheels(el,n){const d=Array(n).fill(0);d.forEach((_,i)=>{const b=document.createElement("button");b.textContent="0";b.onclick=()=>{d[i]=(d[i]+1)%10;b.textContent=d[i];tone("square",1200,700,.02,.03)};el.appendChild(b)});return d}
+function boot(){if(booted)return;booted=true;ac=new(window.AudioContext||window.webkitAudioContext)();ac.resume();$("wake").classList.add("off");start()}
+$("wake").addEventListener("click",boot);
+document.body.style.opacity=0;setTimeout(()=>document.body.style.opacity=1,50);
+
+const ORDER=["friends","doctor","family","work"];
+let level=55,k=0,draining=false,done=false,tG=0,btn={};
+document.querySelectorAll("#valves button").forEach(b=>{btn[b.dataset.v]=b;b.addEventListener("pointerdown",e=>{e.preventDefault();press(b.dataset.v)})});
+function photos(){const m=MEM().slice(0,4);m.forEach((x,i)=>{const p=document.createElement("div");p.className="ph";p.textContent=x.t.slice(0,58)+"...";p.style.left=(6+i*23)+"%";p.style.bottom=(26+(i%2)*22)+"%";p.style.animationDelay=(i*.7)+"s";$("tub").insertBefore(p,$("boy"))})}
+function start(){photos();loop(mkBuf(true),"lowpass",140,.5,.18);
+  (function drip(){setTimeout(()=>{if(booted&&!done)tone("sine",900+Math.random()*500,400,.04,.18);drip()},1500+Math.random()*2500)})();
+  setTimeout(()=>{if(k===0&&!done)cap("Open the memories. Each one says which cut came first, second, third, fourth.")},45000);
+  requestAnimationFrame(frame)}
+function flood(){bump("nl10");jolt();stat=1;level=40;k=0;Object.values(btn).forEach(b=>b.classList.remove("open"));say("It floods. Start again.")}
+function press(v){if(!booted||done||draining)return;
+  if(v===ORDER[k]){btn[v].classList.add("open");k++;level=Math.max(0,level-12);tone("sine",300+k*60,200,.12,.5);if(k===4){draining=true;cap("")}}
+  else{bump("nl10");jolt();level=Math.min(99,level+18);k=0;Object.values(btn).forEach(b=>b.classList.remove("open"));say("Not in the order he cut them.")}}
+async function reveal(){done=true;$("boy").classList.add("on");await sleep(3200);
+  const n=["nl1","nl2","nl3","nl4","nl5","nl6","nl7","nl8","nl9","nl10"].reduce((a,x)=>a+get(x),0);
+  showFrag("THE BATH",["At the bottom of the tub: a ledger. Every page is a night, a name, and what I took.","I was sick. That was never the lie.","The lie was what I did with it. I turned my pain into a leash.","I cut them off in order: her friends, her doctor, her family, her work. Each time I said it was for her own good. Each time she thanked me.","The list of what I had given up was never a gift. It was a debt, and I read it to her whenever she reached for the door.","The boy in the bath learned it first: being needed is safer than being loved.","I am not asking you to forgive me. I am telling you why the house is so quiet.","Mistakes so far: "+n+".","Outside, the storm has arrived. You are alone in the house with me."],()=>{localStorage.setItem("nlp10","1");leave("puzzle11.html")})}
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;tG+=dt;
+  if(draining){level=Math.max(0,level-9*dt);if(level<=0&&!done)reveal()}else if(!done){level+=.9*dt;if(level>=100)flood()}
+  $("water").style.height=level+"%";$("lvl").textContent="water "+Math.round(level)+"%";
+  document.querySelectorAll(".ph").forEach(p=>{p.style.bottom=(Math.max(2,Math.min(70,level-12-(+p.dataset.o||0))))+"%"});
+  requestAnimationFrame(frame)}
+</script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html",
+                 "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html" };   // add "puzzle10.html": "puzzle11.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
+</script>
+</body></html>

@@ -44,7 +44,7 @@
   #cl, #nb { position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.94); display:flex; align-items:center; justify-content:center; padding:1.4rem; box-sizing:border-box; }
   #cl[hidden], #nb[hidden] { display:none; }
   .card { max-width:30rem; width:100%; text-align:center; }
-  .card .t { color:var(--dim); letter-spacing:.3em; font-size:.8rem; } .card .big { font-size:4.4rem; line-height:1.2; margin:1rem 0 .4rem; color:#fff; text-shadow:0 0 14px rgba(255,255,255,.25); }
+  .card .t { color:var(--dim); letter-spacing:.3em; font-size:.8rem; } .card .big { font-size:4.4rem; line-height:1.2; margin:1rem 0 .4rem; color:#fff; text-shadow:0 0 14px rgba(255,255,255,.25); word-break:break-all; }
   .card p { margin:.3rem 0; } .card .d { color:var(--dim); font-style:italic; }
   .go { color:var(--fg); text-decoration:underline; text-underline-offset:4px; display:inline-block; margin-top:1.4rem; }
   #nb .card { text-align:left; } #nbh { color:var(--dim); font-style:italic; margin:0 0 .8rem; }
@@ -52,12 +52,11 @@
   #ta:focus { border-color:#555; }
   #wheels { display:flex; justify-content:center; gap:.6rem; margin:1rem 0; }
   #wheels button { width:48px; height:64px; line-height:64px; text-align:center; font-size:2rem; background:#000; border:1px solid #555; color:#e6dcc0; user-select:none; }
-  #ncard { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .5s; }
+  #ncard { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .8s; text-align:center; padding:1.4rem; }
   #ncard.on { opacity:1; pointer-events:auto; } #ncard .n { font-size:2.2rem; color:#fff; letter-spacing:.2em; } #ncard .s { color:var(--dim); margin-top:.8rem; }
   #flash { position:fixed; inset:0; z-index:55; background:#000; display:none; align-items:center; justify-content:center; pointer-events:none; }
   #flash i { position:relative; width:min(60vw,300px); height:min(92vh,780px); border:2px solid #ddd; border-radius:50% 50% 6px 6px / 16% 16% 0 0; background:#000; }
-  #flash i::before { content:""; position:absolute; left:28%; top:12%; width:44%; height:5%; background:radial-gradient(circle at 20% 50%, #fff 0 6px, transparent 7px), radial-gradient(circle at 80% 50%, #fff 0 6px, transparent 7px), linear-gradient(#d2d2d2, #d2d2d2); border-radius:50% 50% 30% 30%; }
-  #flash i::after { content:""; position:absolute; left:19%; right:19%; top:20%; height:56%; border:2px solid #ddd; border-bottom:none; border-radius:45% 45% 0 0; }
+  #flash i::before { content:""; position:absolute; left:28%; top:12%; width:44%; height:5%; background:radial-gradient(circle at 20% 50%, #fff 0 6px, transparent 7px), radial-gradient(circle at 80% 50%, #fff 0 6px, transparent 7px); }
   body.hit { animation:hit .5s steps(2,end); } @keyframes hit { 0%,100% { background:#000; } 30% { background:#1a0000; } }
   .voice { position:fixed; z-index:28; pointer-events:none; opacity:0; color:#555; }
   @media (prefers-reduced-motion:reduce) { body.hit { animation:none; } }
@@ -80,7 +79,7 @@
       <g id="o-safe"><rect x="290" y="335" width="60" height="55"/><circle cx="320" cy="362" r="10"/></g>
       <g id="o-window"><rect x="390" y="80" width="100" height="130"/><line x1="440" y1="80" x2="440" y2="210"/><line x1="390" y1="145" x2="490" y2="145"/></g>
       <g id="o-mirror"><ellipse cx="560" cy="200" rx="42" ry="72"/><ellipse cx="560" cy="200" rx="34" ry="64"/></g>
-      <g id="o-calendar"><rect x="620" y="110" width="60" height="80"/><line x1="620" y1="128" x2="680" y2="128"/><line x1="620" y1="146" x2="680" y2="146"/><line x1="620" y1="164" x2="680" y2="164"/><line x1="620" y1="182" x2="680" y2="182"/></g>
+      <g id="o-calendar"><rect x="620" y="110" width="60" height="80"/><line x1="620" y1="128" x2="680" y2="128"/><line x1="620" y1="146" x2="680" y2="146"/><line x1="620" y1="164" x2="680" y2="164"/><line x1="640" y1="128" x2="640" y2="190"/><line x1="660" y1="128" x2="660" y2="190"/></g>
       <g id="o-clock"><rect x="710" y="90" width="64" height="30"/><text x="720" y="112">4:12</text></g>
       <g id="o-bed"><rect x="400" y="335" width="190" height="55"/><rect x="406" y="318" width="46" height="18"/></g>
       <g id="o-phone"><rect x="650" y="345" width="90" height="45"/><rect x="680" y="331" width="22" height="14"/></g>
@@ -119,7 +118,7 @@
   const val = id => id === changed() ? CHG[id] : OBJ[id].base;
   function detail(id, v) {
     const m = {
-      fridge:   ["FRIDGE", `<div class="big">${"\u25AE".repeat(v)}</div><p>cereal boxes</p><p class="d">the milk expired a long time ago.</p>`],
+      fridge:   ["FRIDGE", `<p class="d">cereal boxes</p><div class="big">${v}</div><p class="d">milk cartons</p><div class="big" style="font-size:2.4rem">2</div>`],
       tv:       ["TELEVISION", `<div class="big">CH 0${v}</div><p class="d">only static. it hums like it is thinking.</p>`],
       mirror:   ["MIRROR", `<div class="big">${v}</div><p>seconds behind</p><p class="d">the reflection waits before it follows you.</p>`],
       calendar: ["CALENDAR", `<div class="big">${v}</div><p>the day he circled</p><p class="d">no month. no year.</p>`],
@@ -215,17 +214,25 @@
   function inspect(id) {
     if (paused || ending || solved) return;
     if (id === "safe") return openSafe();
+    if (id === "bed") return openBed();
     if (!seen.has(id)) { if (energy <= 0) { say("No energy left tonight."); tone("sine", 120, 80, .1, .3); return; } energy--; seen.add(id); pips(); }
     tone("square", 800, 500, .03, .05);
     $("clc").innerHTML = detail(id, val(id)); $("cl").hidden = false; paused = true; $("clx").onclick = closeCl;
   }
   function closeCl() { $("cl").hidden = true; paused = false; }
 
+  function openBed() {
+    tone("square", 800, 500, .03, .05);
+    $("clc").innerHTML = `<div class="t">BED</div><p class="big" style="font-size:1.6rem">1 pillow</p><p class="d">the sheets remember the shape of him.</p>
+      <button class="go" id="slp">lie down</button> &nbsp; <button class="go" id="clx">back</button><p class="d" style="margin-top:1rem">lying down skips the night. only your notes come with you.</p>`;
+    $("cl").hidden = false; paused = true; $("clx").onclick = closeCl; $("slp").onclick = () => { closeCl(); endNight(true); };
+  }
+
   /* ---------- the safe ---------- */
   const dig = [0, 0, 0, 0, 0];
   function openSafe() {
-    $("clc").innerHTML = `<div class="t">SAFE</div><div id="wheels"></div><p class="d">five numbers. it does not say in which order.</p><button class="go" id="try">open</button> &nbsp; <button class="go" id="clx">back</button>`;
-    const w = $("wheels"); dig.forEach((d, i) => { const b = document.createElement("button"); b.textContent = d; b.onclick = () => { dig[i] = (dig[i] + 1) % 10; b.textContent = dig[i]; tone("square", 280, 190, .02, .04); }; w.appendChild(b); });
+    $("clc").innerHTML = `<div class="t">SAFE</div><div id="wheels"></div><p class="d">five numbers. it does not say in which order.</p><button class="go" id="try">open</button> &nbsp; <button class="go" id="clx">back</button><p id="sm" style="color:var(--red);min-height:1.6em"></p>`;
+    const w = $("wheels"); dig.forEach((d, i) => { const b = document.createElement("button"); b.textContent = d; b.onclick = () => { dig[i] = (dig[i] + 1) % 10; b.textContent = dig[i]; tone("square", 1200, 700, .02, .03); }; w.appendChild(b); });
     $("cl").hidden = false; paused = true; $("clx").onclick = closeCl;
     $("try").onclick = () => {
       if (dig.join("") === CODE) { closeCl(); win(); return; }
@@ -237,23 +244,25 @@
   const ta = $("ta"); ta.value = (() => { try { return localStorage.getItem("nl7notes") || ""; } catch (e) { return ""; } })();
   ta.addEventListener("input", () => { try { localStorage.setItem("nl7notes", ta.value); } catch (e) {} });
   function hints() {
-    const h = ["Nothing is different.", "The answer is fluctuating."]; if (night >= 144) h.push("One thing changes each night."); if (night >= 147) h.push("The light flinches near it."); if (night >= 152) h.push("Left to right.");
+    const h = ["Nothing is different."]; if (night >= 144) h.push("One thing changes each night."); if (night >= 147) h.push("The light flinches near it."); if (night >= 152) h.push("Left to right.");
     $("nbh").innerHTML = h.join("<br>");
   }
   $("nbtn").onclick = () => { if (!booted || ending || solved || !$("cl").hidden) return; hints(); $("nb").hidden = false; paused = true; };
   $("nbc").onclick = () => { $("nb").hidden = true; paused = false; };
 
   /* ---------- nights ---------- */
-  async function card(n, s, ms = 2600) { $("ntxt").textContent = n; $("nsub").textContent = s || ""; $("ncard").classList.add("on"); await sleep(ms); $("ncard").classList.remove("on"); await sleep(200); }
+  async function card(n, s, ms = 2600, fs = "") { $("ntxt").style.fontSize = fs; $("ntxt").textContent = n; $("nsub").textContent = s || ""; $("ncard").classList.add("on"); await sleep(ms); $("ncard").classList.remove("on"); await sleep(800); }
   async function intro() {
     const d = new Date(), t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), at412 = d.getHours() === 4 && Math.abs(d.getMinutes() - 12) <= 2;
+    await sleep(900); await card("The answer is fluctuating.", "", 4200, "1.5rem");
     await card("NIGHT " + night, at412 ? "It is 4:12 where you are, too. I did not plan that." : `It is ${t} where you are. In here it is 4:12.`, 4200);
     paused = false; pips();
   }
-  async function endNight() {
+  async function endNight(skip) {
     if (ending) return; ending = true; paused = true; setVol(.3);
-    for (let i = 0; i < 4; i++) { tone("square", 1800, 1800, .05, .12); await sleep(260); }
-    await bigScare(); setVol(.9);
+    if (skip) { tone("sine", 140, 70, .2, 1.2); await sleep(1300); }          // lying down: no alarm, no flash, just the dark
+    else { for (let i = 0; i < 4; i++) { tone("square", 1800, 1800, .05, .12); await sleep(260); } await bigScare(); }
+    setVol(.9);
     $("cl").hidden = true; $("nb").hidden = true;
     night++; try { localStorage.setItem("nl7night", night); } catch (e) {}
     for (let i = 0; i < 8; i++) { tone("sawtooth", 900 - i * 80, 200, .03, .12); await sleep(70); }       // tape rewinding
@@ -266,7 +275,7 @@
   async function win() {
     solved = true; paused = true; setVol(.35); try { localStorage.setItem("nlp7", "1"); } catch (e) {}
     $("ncard").classList.add("on"); const n = $("ntxt"), s = $("nsub"); n.textContent = ""; s.textContent = "";
-    const lines = ["The safe opens.", "Inside: nothing. The same nothing as every night.", "He lies down.", "The clock changes: 4:12 becomes 4:13.", "Nothing happens.", "Night " + (night + 1) + " is waiting."]; 
+    const lines = ["The safe opens.", "Inside: nothing. The same nothing as every night.", "He lies down.", "The clock changes: 4:12 becomes 4:13.", "Nothing happens.", "Night " + (night + 1) + "."];
     for (const l of lines) { n.style.fontSize = "1.2rem"; n.textContent = l; tone("sine", 220, 220, .05, 1.5); await sleep(3200); }
     $("clk").textContent = "4:13";
     n.innerHTML = ""; s.innerHTML = `Mistakes so far: ${["nl1","nl2","nl3","nl4","nl5","nl6","nl7"].reduce((a, k) => a + get(k), 0)}.<br><br><span class="go" id="next" style="cursor:pointer">continue</span>`;
@@ -315,7 +324,8 @@
 (() => {
   if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
   const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
-                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html" };   // add "puzzle7.html": "puzzle8.html" when it exists
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html",
+                 "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html" };   // add "puzzle10.html": "puzzle11.html" when it exists
   const CODE = atob("Z2FiYnk="); let buf = "";
   addEventListener("keydown", e => {
     if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;

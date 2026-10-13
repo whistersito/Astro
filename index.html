@@ -54,8 +54,8 @@
   .go { color:var(--fg); text-underline-offset:4px; }
   .go:hover, .go:focus-visible { color:#fff; }
 
-  #chest { position:fixed; left:0; right:0; top:36%; z-index:4; text-align:center; font-size:3.4rem; font-weight:bold;
-           letter-spacing:.15em; color:#a00; opacity:0; pointer-events:none; }
+  #chest { position:fixed; left:0; right:0; top:36%; z-index:4; text-align:center; font-size:clamp(1.7rem,8vw,3.2rem); font-weight:bold;
+           letter-spacing:.08em; padding:0 1rem; box-sizing:border-box; color:#a00; opacity:0; pointer-events:none; }
   #chest.on { opacity:1; animation:thud .25s steps(2,end) infinite; }
   @keyframes thud { 50% { transform:scale(1.07) translate(3px,-2px); } }
   body.hit { animation:hit .7s steps(2,end); }
@@ -67,7 +67,7 @@
 <body>
 <noscript><p style="color:#888;padding:2rem;font-family:serif">This needs JavaScript to run.</p></noscript>
 <canvas id="dust"></canvas>
-<div id="vig"></div><div id="pulse"></div><div id="chest">YOU WILL NOT ESCAPE</div>
+<div id="vig"></div><div id="pulse"></div><div id="chest">YOU CAN'T ESCAPE</div>
 
 <div id="title" role="button" tabindex="0">
   <h1>Nothing Left</h1>
@@ -257,7 +257,8 @@
 (() => {
   if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
   const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
-                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html" };   // add "puzzle7.html": "puzzle8.html" when it exists
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html",
+                 "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html" };   // add "puzzle10.html": "puzzle11.html" when it exists
   const CODE = atob("Z2FiYnk="); let buf = "";
   addEventListener("keydown", e => {
     if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
