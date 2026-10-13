@@ -45,12 +45,13 @@
   .voice { position:fixed; z-index:15; pointer-events:none; opacity:0; }
   #wake { position:fixed; inset:0; z-index:30; background:#000; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity 2.5s; }
   #wake p { color:#6b6b6b; font-style:italic; margin:0; animation:blinkp 3s ease-in-out infinite; } @keyframes blinkp { 50% { opacity:.3; } }
+  #wake div { text-align:center; } #wq { color:#4a4a4a; margin:0 0 1.2rem !important; animation:none !important; }
+  #stage.enter { animation:rise 3.2s ease-out both; } @keyframes rise { from { opacity:0; transform:scale(1.07); } }
+  @keyframes tvoff { 0% { transform:scale(1,1); filter:brightness(1); opacity:1; } 55% { transform:scale(1,.012); filter:brightness(4); opacity:1; } 100% { transform:scale(0,0); filter:brightness(9); opacity:0; } }
+  @keyframes pop { from { transform:translate(-50%,-50%) scale(1.9); opacity:.2; } }
+  .tk.placed { animation:pop .7s ease-out; }
   #wake.off { opacity:0; pointer-events:none; }
   body { transition:opacity 2s; }
-  /* credits */
-  #cr .row { display:flex; justify-content:space-between; gap:1rem; border-bottom:1px dotted #222; padding:.2rem 0; }
-  #cr .row span:last-child { color:#f0d9a6; }
-  .lk { color:var(--fg); text-decoration:underline; text-underline-offset:4px; }
   @media (prefers-reduced-motion:reduce) { #fog, #fig.br, #hg { animation:none; } }
   html { -webkit-tap-highlight-color:transparent; } body { touch-action:manipulation; }
 </style>
@@ -58,7 +59,7 @@
 <body>
 <noscript><p style="color:#888;padding:2rem;font-family:serif">This needs JavaScript to run.</p></noscript>
 <div id="fog"></div><canvas id="noise" width="96" height="96"></canvas><div id="shade"></div>
-<div id="wake"><p id="wp">tap to wake him</p></div>
+<div id="wake"><div><p id="wq"></p><p id="wp">tap to wake him</p></div></div>
 <main id="stage">
   <h1>V</h1>
   <p id="cap">They are still out there. Put him back.</p>
@@ -78,24 +79,9 @@
     <p id="note" role="status"></p>
   </section>
 
-  <section id="b" class="sec out" hidden></section>
-  <section id="c" class="sec out" hidden>
-    <div id="cr"></div>
-    <p class="ln on" style="margin-top:2rem"><a id="again" class="lk" href="index.html">play again</a></p>
-  </section>
 </main>
 
 <script>
-  /* ===== EDIT THIS: the real ending ===== */
-  const FROM = "the one who made this";
-  const LETTER = [
-    "I made this for you, in two days, because I wanted you to have something that was only yours.",
-    "Everything dark in here was pretend. Everything you did to get through it was real.",
-    "You noticed the small things. You kept pressing when it got heavy. You came back.",
-    "If the real world ever gets heavy, you don't have to solve it like a puzzle. Just tell me. I will always listen."
-  ];
-  /* ====================================== */
-
   const $ = id => document.getElementById(id);
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const get = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } };
@@ -103,7 +89,7 @@
   const bump = () => { try { localStorage.setItem("nl5", get("nl5") + 1); } catch (e) {} };
   const flash = (t, ms = 2400) => { $("note").textContent = t; setTimeout(() => { if ($("note").textContent === t) $("note").textContent = ""; }, ms); };
   const hit = () => { document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit"); };
-  const jolt = () => { if (!calm) $("stage").animate([{ transform: "translateX(-12px)" }, { transform: "translateX(10px)" }, { transform: "none" }], { duration: 260 }); tone("sine", 120, 40, .4, .3); glitch(.7, .28); hit(); };
+  const jolt = () => { if (!calm) $("stage").animate([{ transform: "translateX(-12px)" }, { transform: "translateX(10px)" }, { transform: "none" }], { duration: 260 }); tone("sine", 120, 40, .4, .3); glitch(.7, .28); try { navigator.vibrate && navigator.vibrate([40, 30, 40]); } catch (e) {} hit(); };
   const setG = g => $("stage").style.setProperty("--g", g);
 
   /* ---------- audio ---------- */
@@ -129,7 +115,7 @@
   }
 
   /* ---------- continuity: the same weather as before, slowly healing ---------- */
-  let sv = .32, svBump = 0, booted = false, fin = false, droneG, sx = innerWidth / 2, sy = innerHeight / 2, last = performance.now();
+  let sv = .32, svBump = get("nlcarry") ? .9 : 0, booted = false, fin = false, droneG, sx = innerWidth / 2, sy = innerHeight / 2, last = performance.now();
   function glitch(v = .5, dur = .25) {
     if (!ac) return; const n = ac.currentTime, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / len); if (i % 37 < 6) d[i] *= 3; }
@@ -139,7 +125,7 @@
     const g = ac.createGain(); g.gain.value = v * .5; src.connect(f); f.connect(ws); ws.connect(g); g.connect(ac.destination); src.start(n);
     tone("sawtooth", 140 + Math.random() * 80, 40, v * .16, dur);
   }
-  const PADF = { heart: 130.8, lungs: 196, limbs: 164.8, kidney: 261.6, eye: 329.6 }, pads = {};
+  const PADF = { heart: 130.8, lungs: 155.6, limbs: 185, kidney: 220, eye: 261.6 }, pads = {};
   function padOn(id) {                                   // every piece adds a note; together they become the chord that ended the last page
     if (!ac) return; const o = ac.createOscillator(), g = ac.createGain();
     o.type = "sine"; o.frequency.value = PADF[id]; g.gain.value = 0; g.gain.setTargetAtTime(.05, ac.currentTime, 1.5);
@@ -149,7 +135,7 @@
     const q = pads[id]; if (!q) return; q.o.frequency.setTargetAtTime(PADF[id] * .6, ac.currentTime, .2); q.g.gain.setTargetAtTime(0, ac.currentTime, .15);
     setTimeout(() => q.o.stop(), 900); delete pads[id];
   }
-  const chime = () => tone("sine", 1046, 1046, .05, 1.6);
+  const chime = () => tone("sine", 311, 311, .05, 1.6);
   function boot() {
     if (booted) return; booted = true; if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); ac.resume();
     const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0); let l = 0;
@@ -157,11 +143,11 @@
     const s = ac.createBufferSource(); s.buffer = buf; s.loop = true;
     const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 170;
     droneG = ac.createGain(); droneG.gain.value = 0; s.connect(f); f.connect(droneG); droneG.connect(ac.destination); s.start();
-    [261.6, 329.6, 392].forEach((fq, i) => setTimeout(() => tone("sine", fq, fq, .06, 5), i * 500));     // an echo of where the last page ended
-    $("wake").classList.add("off");
+    tone("sine", 110, 110, .07, 6);     // the same low note the last page ended on
+    $("wake").classList.add("off"); $("stage").classList.add("enter");
   }
   $("wake").addEventListener("click", boot);
-  if (get("nlcarry")) $("wp").textContent = "he is still here. tap.";
+  if (get("nlcarry")) { $("wq").textContent = "I am not better. I am only still here."; $("wp").textContent = "tap."; }
   const nz = $("noise"), nctx = nz.getContext("2d"), img = nctx.createImageData(96, 96);
   setInterval(() => {
     for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
@@ -171,7 +157,7 @@
   (function wander() {                                   // the voice from the last page, turning kind one piece at a time
     setTimeout(() => {
       if (!calm && booted) {
-        const warm = fin || Math.random() < next / 5, e = document.createElement("span"); e.className = "voice";
+        const warm = false, e = document.createElement("span"); e.className = "voice";
         e.textContent = (warm ? WARMW : DARKW)[Math.floor(Math.random() * 6)];
         e.style.color = warm ? "#c9a24a" : "#4a4a4a"; e.style.left = Math.random() * 80 + "%"; e.style.top = Math.random() * 85 + "%"; e.style.fontSize = (1 + Math.random() * 1.5) + "rem";
         document.body.appendChild(e); if (warm) tone("sine", 523, 523, .025, 1.4); else glitch(.08 + sv * .2, .1);
@@ -216,7 +202,7 @@
     if (z !== t.id) { bump(); jolt(); flash("That is not where it goes."); return; }
     if (t.id !== ORDER[next]) { collapse(); return; }
     t.placed = true; t.x = ZONES[z][0]; t.y = ZONES[z][1]; t.el.classList.add("placed"); next++;
-    fx[t.id].on(); padOn(t.id); chime(); setG(.9 - .9 * next / 5); thump();
+    fx[t.id].on(); try { navigator.vibrate && navigator.vibrate(30); } catch (e) {} padOn(t.id); chime(); setG(.9 - .1 * next / 5); thump();
     if (next === 5) finish();
   }
   function collapse() {                                // the wrong order makes the body reject everything
@@ -234,41 +220,17 @@
   setTimeout(() => { if (next === 0) $("cap").textContent = "What was given last must return first."; }, 40000);
   setTimeout(() => { if (next < 5) document.body.classList.add("nums"); }, 100000);
 
-  /* ---------- the end of the dream, then the truth ---------- */
-  function go(from, to, cb) { $(from).classList.add("out"); setTimeout(() => { $(from).hidden = true; $(to).hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => $(to).classList.remove("out"))); cb && cb(); }, 1300); }
+  /* ---------- he is whole. he is not better. ---------- */
   function finish() {
-    fin = true; svBump = 0; document.documentElement.style.setProperty("--shc", "240,217,166");
-    $("cap").textContent = "";
+    fin = true; svBump = 0; $("cap").textContent = "";
     setTimeout(() => { $("cap").textContent = "He is looking at you."; }, 2500);
-    setTimeout(() => { $("cap").textContent = "Thank you."; [261.6, 329.6, 392, 523.2].forEach((f, i) => setTimeout(() => tone("sine", f, f, .09, 7), i * 600)); }, 6000);
-    setTimeout(() => {                      // not the end: the dream hands him over to the next door
-      $("cap").textContent = ""; try { localStorage.setItem("nlcarry", "1"); } catch (e) {}
-      document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle6.html", 2100);
+    setTimeout(() => { $("cap").textContent = "He is whole. He is not better."; tone("sine", 110, 110, .1, 8); tone("sine", 116.5, 116.5, .05, 8); }, 6000);
+    setTimeout(() => {
+      clearInterval(hb); clearInterval(br); try { localStorage.setItem("nlcarry", "1"); } catch (e) {}
+      $("stage").style.animation = "tvoff 1.5s ease-in forwards"; tone("sine", 2200, 60, .07, 1.3);      // he switches off like a screen
+      setTimeout(() => { document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle6.html", 1600); }, 1600);
     }, 11000);
   }
-  function reveal() {
-    $("cap").textContent = "";
-    const lines = [["Thank you for putting me back, " + NAME + ".", ""], ["I should tell you the truth.", ""], ["My name isn't X.", ""],
-      ...LETTER.map(t => [t, ""]), ["- " + FROM, "gold dim"]];
-    const total = [...Array(0)];
-    lines.forEach(([t, c], i) => {
-      const p = document.createElement("p"); p.className = "ln " + c; p.textContent = t; $("b").appendChild(p);
-      setTimeout(() => p.classList.add("on"), 800 + i * 3600);
-    });
-    setTimeout(() => go("b", "c", credits), 800 + lines.length * 3600 + 5000);
-  }
-  function credits() {
-    const f = [get("nl1"), get("nl2"), get("nl3"), get("nl4"), get("nl5")], tot = f.reduce((a, b) => a + b, 0);
-    const names = ["I \u00B7 The Longest Dream", "II \u00B7 The Wind", "III \u00B7 The Lock", "IV \u00B7 The Voice", "V \u00B7 The Return"];
-    let mins = 0; try { const s = +localStorage.getItem("nlstart"); if (s) mins = Math.max(1, Math.round((Date.now() - s) / 60000)); } catch (e) {}
-    const rows = names.map((n, i) => `<div class="row"><span>${n}</span><span>${f[i]} mistake${f[i] === 1 ? "" : "s"}</span></div>`);
-    rows.push(`<div class="row"><span>Time inside</span><span>${mins ? (mins >= 60 ? Math.floor(mins / 60) + " h " + (mins % 60) + " min" : mins + " min") : "unknown"}</span></div>`);
-    $("cr").innerHTML = `<p class="gold">Nothing Left</p>${rows.join("")}
-      <p style="margin-top:1.6rem">${tot === 0 ? "You never fell once. I don't believe you." : `${tot} mistake${tot === 1 ? "" : "s"}, and you never stopped.`}</p>
-      <p class="dim">Made for ${NAME}.</p>`;
-    $("cap").textContent = "";
-  }
-  $("again").addEventListener("click", () => { try { ["nl1", "nl2", "nl3", "nl4", "nl5", "nlstart", "nlname"].forEach(k => localStorage.removeItem(k)); } catch (e) {} });
 
   /* ---------- loop: tokens drift like they are underwater; his eyes follow you ---------- */
   let mx = innerWidth / 2, my = innerHeight / 2;
@@ -276,7 +238,7 @@
   setG(.9); setTimeout(() => document.body.style.opacity = 1, 50); document.body.style.opacity = 0;
   function frame(now) {
     const t = now / 1000, dt = Math.min(.05, (now - last) / 1000); last = now;
-    svBump = Math.max(0, svBump - dt * .07); sv = fin ? 0 : Math.max(0, .32 * (1 - next / 5) + svBump);
+    svBump = Math.max(0, svBump - dt * .07); sv = Math.max(.15, .32 * (1 - next / 5) + svBump);
     $("noise").style.opacity = .03 + sv * .4; if (droneG) droneG.gain.setTargetAtTime(sv * .5, ac.currentTime, .5);
     sx += (mx - sx) * .035; sy += (my - sy) * .035; const sz = 130 + sv * 260;
     $("shade").style.width = $("shade").style.height = sz + "px"; $("shade").style.transform = `translate(${sx - sz / 2}px,${sy - sz / 2}px)`;
@@ -294,6 +256,24 @@
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+</script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html" };   // add "puzzle7.html": "puzzle8.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
 </script>
 </body>
 </html>

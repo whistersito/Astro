@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E">
+<title>VII</title>
+<style>
+  :root { --fg:#bdbdbd; --dim:#5e5e5e; --red:#9a3a3a; }
+  html { -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; background:#000; color:var(--fg); }
+  body { font-family:"Courier New", Courier, monospace; font-size:15px; line-height:1.6; transition:opacity 2s; overflow-x:hidden; }
+  button { all:unset; cursor:pointer; }
+  #noise { position:fixed; inset:0; width:100%; height:100%; z-index:30; pointer-events:none; mix-blend-mode:overlay; image-rendering:pixelated; opacity:.1; }
+  #vig { position:fixed; inset:0; z-index:29; pointer-events:none; background:radial-gradient(ellipse at center, transparent 40%, #000 105%); opacity:.5; }
+  #wake { position:fixed; inset:0; z-index:60; background:#000; display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer; transition:opacity 2.5s; padding:1.4rem; }
+  #wake p { margin:.4rem 0; } #wake .a { color:var(--fg); animation:bl 3s ease-in-out infinite; } #wake .b { color:var(--dim); font-size:.85rem; }
+  @keyframes bl { 50% { opacity:.3; } } #wake.off { opacity:0; pointer-events:none; }
+
+  #game { position:relative; z-index:2; max-width:900px; margin:0 auto; padding:2vh 1rem 12vh; box-sizing:border-box; }
+  #hud { display:flex; justify-content:space-between; align-items:center; gap:.8rem; color:var(--dim); font-size:.85rem; padding:.2rem 0 .6rem; }
+  #hud b { font-weight:normal; color:#cfcfcf; } #en { letter-spacing:.2em; color:#cfcfcf; }
+  #nbtn { border:1px solid #2a2a2a; padding:.15rem .7rem; color:var(--dim); } #nbtn:hover { color:#fff; border-color:#666; }
+
+  #stage { position:relative; width:100%; aspect-ratio:800/480; background:#060606; overflow:hidden; touch-action:none; border:1px solid #111; user-select:none; -webkit-user-select:none; }
+  #room { position:absolute; inset:0; width:100%; height:100%; }
+  #room * { stroke:#9a9a9a; fill:none; stroke-width:2; } #room text { fill:#cfcfcf; stroke:none; font-family:"Courier New",monospace; font-size:18px; }
+  #room g { transform-box:fill-box; }
+  #fig { position:absolute; bottom:20%; left:100%; width:56px; height:170px; transform:translateX(-50%) scale(var(--s,1)); transform-origin:bottom; transition:left 2s, opacity 1s; z-index:1; }
+  #fig::before { content:""; position:absolute; left:50%; top:0; width:32px; height:40px; margin-left:-16px; border-radius:50%; background:#000; box-shadow:0 0 0 1px #3a3a3a; }
+  #fig::after { content:""; position:absolute; left:0; right:0; top:38px; bottom:0; background:#000; border-radius:28px 28px 3px 3px; box-shadow:0 0 0 1px #3a3a3a; }
+  #fig.gone { opacity:0; }
+  #dark { position:absolute; inset:0; pointer-events:none; z-index:2;
+          background:radial-gradient(circle var(--r,120px) at var(--x,-999px) var(--y,-999px), rgba(0,0,0,0) 0, rgba(0,0,0,.3) 45%, rgba(0,0,0,.985) 100%); }
+  #dark::after { content:""; position:absolute; inset:0; background:radial-gradient(circle var(--r,120px) at var(--x,-999px) var(--y,-999px), rgba(255,235,200,.07), transparent 70%); }
+  #spots { position:absolute; inset:0; z-index:3; } #spots button { position:absolute; }
+  #wf { position:absolute; z-index:4; pointer-events:none; opacity:0; left:48.75%; top:16.6%; width:12.5%; height:27%; background:#000; }
+  #wf::before { content:""; position:absolute; left:50%; top:12%; width:34%; height:30%; margin-left:-17%; border-radius:50%; background:#000; box-shadow:0 0 0 2px #ddd; }
+  #wf::after { content:""; position:absolute; left:15%; right:15%; top:42%; bottom:0; background:#000; border-radius:40% 40% 0 0; box-shadow:0 0 0 2px #ddd; }
+  #alarm { position:absolute; left:0; right:0; bottom:0; height:3px; z-index:5; background:#141414; } #alarm i { display:block; height:100%; width:0; background:#7a2a2a; }
+  #msg { min-height:1.7em; text-align:center; margin:.8rem 0 0; color:var(--red); }
+
+  #cl, #nb { position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.94); display:flex; align-items:center; justify-content:center; padding:1.4rem; box-sizing:border-box; }
+  #cl[hidden], #nb[hidden] { display:none; }
+  .card { max-width:30rem; width:100%; text-align:center; }
+  .card .t { color:var(--dim); letter-spacing:.3em; font-size:.8rem; } .card .big { font-size:4.4rem; line-height:1.2; margin:1rem 0 .4rem; color:#fff; text-shadow:0 0 14px rgba(255,255,255,.25); word-break:break-all; }
+  .card p { margin:.3rem 0; } .card .d { color:var(--dim); font-style:italic; }
+  .go { color:var(--fg); text-decoration:underline; text-underline-offset:4px; display:inline-block; margin-top:1.4rem; }
+  #nb .card { text-align:left; } #nbh { color:var(--dim); font-style:italic; margin:0 0 .8rem; }
+  #ta { width:100%; box-sizing:border-box; height:42vh; background:#050505; border:1px solid #222; color:#ddd; font:inherit; padding:.7rem; resize:none; outline:none; }
+  #ta:focus { border-color:#555; }
+  #wheels { display:flex; justify-content:center; gap:.6rem; margin:1rem 0; }
+  #wheels button { width:48px; height:64px; line-height:64px; text-align:center; font-size:2rem; background:#000; border:1px solid #555; color:#e6dcc0; user-select:none; }
+  #ncard { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .8s; text-align:center; padding:1.4rem; }
+  #ncard.on { opacity:1; pointer-events:auto; } #ncard .n { font-size:2.2rem; color:#fff; letter-spacing:.2em; } #ncard .s { color:var(--dim); margin-top:.8rem; }
+  #flash { position:fixed; inset:0; z-index:55; background:#000; display:none; align-items:center; justify-content:center; pointer-events:none; }
+  #flash i { position:relative; width:min(60vw,300px); height:min(92vh,780px); border:2px solid #ddd; border-radius:50% 50% 6px 6px / 16% 16% 0 0; background:#000; }
+  #flash i::before { content:""; position:absolute; left:28%; top:12%; width:44%; height:5%; background:radial-gradient(circle at 20% 50%, #fff 0 6px, transparent 7px), radial-gradient(circle at 80% 50%, #fff 0 6px, transparent 7px); }
+  body.hit { animation:hit .5s steps(2,end); } @keyframes hit { 0%,100% { background:#000; } 30% { background:#1a0000; } }
+  .voice { position:fixed; z-index:28; pointer-events:none; opacity:0; color:#555; }
+  @media (prefers-reduced-motion:reduce) { body.hit { animation:none; } }
+</style>
+</head>
+<body>
+<noscript><p style="padding:2rem">This needs JavaScript to run.</p></noscript>
+<audio id="song" src="The_Lobotomy.mp3" preload="auto" loop></audio>
+<canvas id="noise" width="96" height="96"></canvas><div id="vig"></div><div id="flash"><i></i></div>
+<div id="wake"><div><p class="a">tap to begin</p><p class="b">headphones, volume a little low.<br>this one has sound.</p></div></div>
+<div id="ncard"><div class="n" id="ntxt"></div><div class="s" id="nsub"></div></div>
+
+<main id="game">
+  <div id="hud"><span>NIGHT <b id="night">141</b></span><span id="clk">4:12</span><span id="en"></span><button id="nbtn">notebook</button></div>
+  <div id="stage">
+    <svg id="room" viewBox="0 0 800 480">
+      <line x1="0" y1="390" x2="800" y2="390"/>
+      <g id="o-fridge"><rect x="30" y="140" width="80" height="250"/><line x1="30" y1="262" x2="110" y2="262"/><rect x="97" y="190" width="5" height="42"/><rect x="97" y="286" width="5" height="42"/></g>
+      <g id="o-tv"><rect x="140" y="250" width="120" height="75"/><rect x="150" y="258" width="100" height="59"/><rect x="165" y="325" width="70" height="65"/></g>
+      <g id="o-safe"><rect x="290" y="335" width="60" height="55"/><circle cx="320" cy="362" r="10"/></g>
+      <g id="o-window"><rect x="390" y="80" width="100" height="130"/><line x1="440" y1="80" x2="440" y2="210"/><line x1="390" y1="145" x2="490" y2="145"/></g>
+      <g id="o-mirror"><ellipse cx="560" cy="200" rx="42" ry="72"/><ellipse cx="560" cy="200" rx="34" ry="64"/></g>
+      <g id="o-calendar"><rect x="620" y="110" width="60" height="80"/><line x1="620" y1="128" x2="680" y2="128"/><line x1="620" y1="146" x2="680" y2="146"/><line x1="620" y1="164" x2="680" y2="164"/><line x1="640" y1="128" x2="640" y2="190"/><line x1="660" y1="128" x2="660" y2="190"/></g>
+      <g id="o-clock"><rect x="710" y="90" width="64" height="30"/><text x="720" y="112">4:12</text></g>
+      <g id="o-bed"><rect x="400" y="335" width="190" height="55"/><rect x="406" y="318" width="46" height="18"/></g>
+      <g id="o-phone"><rect x="650" y="345" width="90" height="45"/><rect x="680" y="331" width="22" height="14"/></g>
+    </svg>
+    <div id="fig"></div><div id="dark"></div><div id="spots"></div><div id="wf"></div><div id="alarm"><i></i></div>
+  </div>
+  <p id="msg" role="status"></p>
+</main>
+
+<div id="cl" hidden><div class="card" id="clc"></div></div>
+<div id="nb" hidden><div class="card"><p id="nbh"></p><textarea id="ta" placeholder="write what you saw. it is the only thing that remembers." spellcheck="false"></textarea><button id="nbc" class="go">close</button></div></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const get = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } };
+  const bump = k => { try { localStorage.setItem(k, get(k) + 1); } catch (e) {} };
+  const NAME = (() => { try { return localStorage.getItem("nlname") || "you"; } catch (e) { return "you"; } })();
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const REAL_SCARE = false;          // true = the end of every night hits harder (louder, brighter). false = it only feels like it will.
+
+  /* ---------- the room. Nothing is different. One thing is. ---------- */
+  const OBJ = {
+    fridge:{x:30,y:140,w:80,h:250,cx:70,cy:265,base:3},   tv:{x:140,y:250,w:120,h:140,cx:200,cy:320,base:7},
+    safe:{x:290,y:335,w:60,h:55,cx:320,cy:362},            window:{x:390,y:80,w:100,h:130,cx:440,cy:145},
+    mirror:{x:515,y:125,w:90,h:150,cx:560,cy:200,base:0},  calendar:{x:620,y:110,w:60,h:80,cx:650,cy:150,base:5},
+    clock:{x:710,y:90,w:64,h:30,cx:742,cy:105},            bed:{x:400,y:320,w:190,h:70,cx:495,cy:362},
+    phone:{x:650,y:330,w:90,h:60,cx:695,cy:360,base:1}
+  };
+  const CHG = { fridge:9, tv:4, mirror:1, calendar:2, phone:7 };                     // what each thing becomes on its night
+  const CYCLE = ["tv", "phone", "fridge", "mirror", "calendar"];
+  const ORDER = Object.keys(CHG).sort((a, b) => OBJ[a].cx - OBJ[b].cx);               // left to right
+  const CODE = ORDER.map(k => CHG[k]).join("");                                          // 94127
+  let night = get("nl7night") || 141, energy = 5, seen = new Set(), elapsed = 0, paused = true, ending = false, solved = false, dread = 0, figHide = 0;
+  const NIGHT_LEN = 95, changed = () => CYCLE[(night - 141) % 5];
+  const val = id => id === changed() ? CHG[id] : OBJ[id].base;
+  function detail(id, v) {
+    const m = {
+      fridge:   ["FRIDGE", `<div class="big">${"\u25AE".repeat(v)}</div><p>cereal boxes</p><p class="d">the milk expired a long time ago.</p>`],
+      tv:       ["TELEVISION", `<div class="big">CH 0${v}</div><p class="d">only static. it hums like it is thinking.</p>`],
+      mirror:   ["MIRROR", `<div class="big">${v}</div><p>seconds behind</p><p class="d">the reflection waits before it follows you.</p>`],
+      calendar: ["CALENDAR", `<div class="big">${v}</div><p>the day he circled</p><p class="d">no month. no year.</p>`],
+      phone:    ["PHONE", `<div class="big">${v}</div><p>unread</p><p class="d">the last one asks if he is okay.</p>`],
+      window:   ["WINDOW", `<p class="big" style="font-size:1.6rem">streetlight: on<br>cars: 0</p><p class="d">nothing has crossed it all night.</p>`],
+      clock:    ["CLOCK", `<div class="big">4:12</div><p class="d">it has said that for a long time.</p>`],
+      bed:      ["BED", `<p class="big" style="font-size:1.6rem">1 pillow</p><p class="d">the sheets remember the shape of him.</p>`]
+    }[id];
+    return `<div class="t">${m[0]}</div>${m[1]}<button class="go" id="clx">back</button>`;
+  }
+
+  /* ---------- sound: the song, plus the room's own noises ---------- */
+  const song = $("song"); let ac, gainN, an, fd, booted = false, songOK = false, tailFired = false;
+  function tone(type, f0, f1, v, dur) {
+    if (!ac) return; const n = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, n); o.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    g.gain.setValueAtTime(0, n); g.gain.linearRampToValueAtTime(v, n + .005); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+    o.connect(g); g.connect(ac.destination); o.start(n); o.stop(n + dur + .05);
+  }
+  function glitch(v = .5, dur = .25) {
+    if (!ac) return; v = Math.min(v, REAL_SCARE ? .9 : .6); const n = ac.currentTime, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / len); if (i % 37 < 6) d[i] *= 3; }
+    const src = ac.createBufferSource(); src.buffer = buf; const ws = ac.createWaveShaper(), c = new Float32Array(256);
+    for (let i = 0; i < 256; i++) c[i] = Math.tanh((i / 128 - 1) * 6); ws.curve = c;
+    const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 700 + Math.random() * 2400; f.Q.value = .9;
+    const g = ac.createGain(); g.gain.value = v * .5; src.connect(f); f.connect(ws); ws.connect(g); g.connect(ac.destination); src.start(n);
+    tone("sawtooth", 140 + Math.random() * 80, 40, v * .16, dur);
+  }
+  const setVol = v => { if (gainN) gainN.gain.setTargetAtTime(v, ac.currentTime, .08); else song.volume = Math.max(0, Math.min(1, v)); };
+  const level = () => { if (an) { an.getByteFrequencyData(fd); let s = 0; for (let i = 0; i < 8; i++) s += fd[i]; return s / 8 / 255; } return .35 + .25 * Math.sin(performance.now() / 700); };
+  function boot() {
+    if (booted) return; booted = true; ac = new (window.AudioContext || window.webkitAudioContext)(); ac.resume();
+    if (/^https?:/.test(location.protocol)) {            // analysing the song only works when hosted (GitHub Pages is fine)
+      try { const s = ac.createMediaElementSource(song); an = ac.createAnalyser(); an.fftSize = 256; fd = new Uint8Array(an.frequencyBinCount);
+            gainN = ac.createGain(); gainN.gain.value = .9; s.connect(an); an.connect(gainN); gainN.connect(ac.destination); } catch (e) { an = null; gainN = null; }
+    } else song.volume = .85;
+    song.play().then(() => songOK = true).catch(() => { songOK = false; if (song.error || song.networkState === 3) drone(); });
+    song.addEventListener("error", () => { songOK = false; drone(); });
+    $("wake").classList.add("off"); intro();
+  }
+  function drone() {                                      // if the song file is missing, the room still hums
+    const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0); let l = 0;
+    for (let i = 0; i < len; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; }
+    const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 170;
+    const g = ac.createGain(); g.gain.value = .5; s.connect(f); f.connect(g); g.connect(ac.destination); s.start();
+  }
+  $("wake").addEventListener("click", boot);
+  document.body.style.opacity = 0; setTimeout(() => document.body.style.opacity = 1, 50);
+
+  /* ---------- dread ---------- */
+  const nctx = $("noise").getContext("2d"), img = nctx.createImageData(96, 96); let stat = 0;
+  setInterval(() => {
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    nctx.putImageData(img, 0, 0); stat = Math.max(0, stat - .02);
+  }, 90);
+  const jolt = () => { glitch(.7, .28); try { navigator.vibrate && navigator.vibrate([40, 30, 40]); } catch (e) {}
+                       document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit"); };
+  const say = (t, ms = 2600) => { $("msg").textContent = t; setTimeout(() => { if ($("msg").textContent === t) $("msg").textContent = ""; }, ms); };
+  const WORDS = ["again", "still", "listen", "behind you", "no", "quiet", "stay", "4:12"];
+  function whisper() {
+    if (calm) return; const e = document.createElement("span"); e.className = "voice"; e.textContent = WORDS[Math.floor(Math.random() * WORDS.length)];
+    e.style.left = Math.random() * 80 + "%"; e.style.top = Math.random() * 85 + "%"; e.style.fontSize = (1 + Math.random() * 1.6) + "rem"; document.body.appendChild(e);
+    glitch(.12, .12); e.animate([{ opacity: 0 }, { opacity: .5 }, { opacity: 0 }], { duration: 1100 }).onfinish = () => e.remove();
+  }
+  let blackout = false;
+  const FAKES = [
+    async () => { setVol(0); blackout = true; await sleep(1500); blackout = false; if (Math.random() < .35) tone("sine", 60, 30, .3, .35); setVol(.9); },   // the silence before something. then nothing.
+    async () => { const w = $("wf"); w.style.opacity = 1; glitch(.2, .1); await sleep(130); w.style.opacity = 0; },                                      // someone in the window
+    async () => { whisper(); },
+    async () => { stat = 1; glitch(.3, .15); await sleep(160); }
+  ];
+  (function scheduler() {
+    setTimeout(() => { if (booted && !paused && !ending && !solved) FAKES[Math.floor(Math.random() * FAKES.length)](); scheduler(); }, 11000 + Math.random() * 14000);
+  })();
+  async function bigScare() {
+    const f = $("flash"); glitch(REAL_SCARE ? .9 : .5, .4); if (REAL_SCARE) tone("sawtooth", 90, 40, .5, .5);
+    if (!calm) { f.style.display = "flex"; await sleep(REAL_SCARE ? 260 : 170); f.style.display = "none"; }
+    jolt();
+  }
+
+  /* ---------- the light ---------- */
+  const stage = $("stage"); let lx = -999, ly = -999, flinchT = 0;
+  const aim = e => { const r = stage.getBoundingClientRect(); lx = e.clientX - r.left; ly = e.clientY - r.top - (e.pointerType === "touch" ? 44 : 0); };
+  stage.addEventListener("pointerdown", aim); stage.addEventListener("pointermove", aim); stage.addEventListener("pointerleave", () => lx = -999);
+  Object.keys(OBJ).forEach(id => {
+    const o = OBJ[id], b = document.createElement("button"); b.setAttribute("aria-label", id);
+    b.style.left = o.x / 8 + "%"; b.style.top = o.y / 4.8 + "%"; b.style.width = o.w / 8 + "%"; b.style.height = o.h / 4.8 + "%";
+    b.addEventListener("click", () => inspect(id)); $("spots").appendChild(b);
+  });
+
+  /* ---------- inspecting costs energy. there is only so much of it. ---------- */
+  const pips = () => $("en").textContent = "\u25CF".repeat(energy) + "\u25CB".repeat(5 - energy);
+  function inspect(id) {
+    if (paused || ending || solved) return;
+    if (id === "safe") return openSafe();
+    if (!seen.has(id)) { if (energy <= 0) { say("No energy left tonight."); tone("sine", 120, 80, .1, .3); return; } energy--; seen.add(id); pips(); }
+    tone("square", 800, 500, .03, .05);
+    $("clc").innerHTML = detail(id, val(id)); $("cl").hidden = false; paused = true; $("clx").onclick = closeCl;
+  }
+  function closeCl() { $("cl").hidden = true; paused = false; }
+
+  /* ---------- the safe ---------- */
+  const dig = [0, 0, 0, 0, 0];
+  function openSafe() {
+    $("clc").innerHTML = `<div class="t">SAFE</div><div id="wheels"></div><p class="d">five numbers. it does not say in which order.</p><button class="go" id="try">open</button> &nbsp; <button class="go" id="clx">back</button><p id="sm" style="color:var(--red);min-height:1.6em"></p>`;
+    const w = $("wheels"); dig.forEach((d, i) => { const b = document.createElement("button"); b.textContent = d; b.onclick = () => { dig[i] = (dig[i] + 1) % 10; b.textContent = dig[i]; tone("square", 1200, 700, .02, .03); }; w.appendChild(b); });
+    $("cl").hidden = false; paused = true; $("clx").onclick = closeCl;
+    $("try").onclick = () => {
+      if (dig.join("") === CODE) { closeCl(); win(); return; }
+      bump("nl7"); elapsed += 20; jolt(); $("sm").textContent = "the night just got shorter.";
+    };
+  }
+
+  /* ---------- the notebook: the only thing that survives the reset ---------- */
+  const ta = $("ta"); ta.value = (() => { try { return localStorage.getItem("nl7notes") || ""; } catch (e) { return ""; } })();
+  ta.addEventListener("input", () => { try { localStorage.setItem("nl7notes", ta.value); } catch (e) {} });
+  function hints() {
+    const h = ["Nothing is different."]; if (night >= 144) h.push("One thing changes each night."); if (night >= 147) h.push("The light flinches near it."); if (night >= 152) h.push("Left to right.");
+    $("nbh").innerHTML = h.join("<br>");
+  }
+  $("nbtn").onclick = () => { if (!booted || ending || solved || !$("cl").hidden) return; hints(); $("nb").hidden = false; paused = true; };
+  $("nbc").onclick = () => { $("nb").hidden = true; paused = false; };
+
+  /* ---------- nights ---------- */
+  async function card(n, s, ms = 2600) { $("ntxt").textContent = n; $("nsub").textContent = s || ""; $("ncard").classList.add("on"); await sleep(ms); $("ncard").classList.remove("on"); await sleep(800); }
+  async function intro() {
+    const d = new Date(), t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), at412 = d.getHours() === 4 && Math.abs(d.getMinutes() - 12) <= 2;
+    await card("NIGHT " + night, at412 ? "It is 4:12 where you are, too. I did not plan that." : `It is ${t} where you are. In here it is 4:12.`, 4200);
+    paused = false; pips();
+  }
+  async function endNight() {
+    if (ending) return; ending = true; paused = true; setVol(.3);
+    for (let i = 0; i < 4; i++) { tone("square", 1800, 1800, .05, .12); await sleep(260); }
+    await bigScare(); setVol(.9);
+    $("cl").hidden = true; $("nb").hidden = true;
+    night++; try { localStorage.setItem("nl7night", night); } catch (e) {}
+    for (let i = 0; i < 8; i++) { tone("sawtooth", 900 - i * 80, 200, .03, .12); await sleep(70); }       // tape rewinding
+    energy = 5; seen = new Set(); elapsed = 0; dread = Math.min(5, dread + 1); figHide = 0; tailFired = false; pips(); $("night").textContent = night;
+    await card("NIGHT " + night, "Nothing is different.", 2200);
+    ending = false; paused = false;
+  }
+
+  /* ---------- the ending ---------- */
+  async function win() {
+    solved = true; paused = true; setVol(.35); try { localStorage.setItem("nlp7", "1"); } catch (e) {}
+    $("ncard").classList.add("on"); const n = $("ntxt"), s = $("nsub"); n.textContent = ""; s.textContent = "";
+    const lines = ["The safe opens.", "Inside: nothing. The same nothing as every night.", "He lies down.", "The clock changes: 4:12 becomes 4:13.", "Nothing happens.", "Night " + (night + 1) + "."];
+    for (const l of lines) { n.style.fontSize = "1.2rem"; n.textContent = l; tone("sine", 220, 220, .05, 1.5); await sleep(3200); }
+    $("clk").textContent = "4:13";
+    n.innerHTML = ""; s.innerHTML = `Mistakes so far: ${["nl1","nl2","nl3","nl4","nl5","nl6","nl7"].reduce((a, k) => a + get(k), 0)}.<br><br><span class="go" id="next" style="cursor:pointer">continue</span>`;
+    $("next").onclick = () => { document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle8.html", 2100); };
+  }
+
+  /* ---------- loop ---------- */
+  let last = performance.now(), flT = 0, t = 0;
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+    const r = stage.getBoundingClientRect(), sc = r.width / 800, e = level();
+    $("noise").style.opacity = .05 + e * .12 + stat * .5; $("vig").style.opacity = .45 + e * .35;
+    let R = Math.max(70, 130 * sc) * (calm ? 1 : 1 + Math.sin(t * 5) * .05 + e * .12), flinch = false;
+    if (booted && !paused && !ending && lx > -100) {
+      const o = OBJ[changed()], d = Math.hypot(lx - o.cx * sc, ly - o.cy * sc);
+      if (d < R * 1.05) { flinch = true; R *= .5 + Math.random() * .7; flT += dt; if (flT > .3) { flT = 0; tone("square", 90, 55, .018, .06); } }
+    }
+    Object.keys(CHG).forEach(k => { const g = $("o-" + k); g.style.transform = (flinch && k === changed() && !calm) ? `translate(${(Math.random() - 1) * 3}px,${(Math.random() - .5) * 2}px)` : ""; });
+    if (blackout) R = 0;
+    stage.style.setProperty("--x", lx + "px"); stage.style.setProperty("--y", ly + "px"); stage.style.setProperty("--r", R + "px");
+
+    // the one in the dark: it waits near the door and comes closer every night
+    const fig = $("fig"), fx = (100 - Math.min(5, dread) * 5.5) , fxPx = fx / 100 * r.width;
+    fig.style.left = fx + "%"; fig.style.setProperty("--s", (.8 + dread * .06) * Math.max(.6, sc * 1.05));
+    if (figHide > 0 || dread === 0) { figHide = Math.max(0, figHide - dt); fig.classList.add("gone"); } else {
+      fig.classList.remove("gone");
+      if (!paused && !ending && dread > 0 && lx > -100 && Math.hypot(lx - fxPx, ly - r.height * .66) < R * .9) {       // the light touches it
+        figHide = 14; say("It looked back."); elapsed += 10; stat = 1; jolt(); bump("nl7");
+      }
+    }
+
+    if (!paused && !ending) {
+      elapsed += dt; $("alarm").firstElementChild.style.width = Math.min(100, elapsed / NIGHT_LEN * 100) + "%";
+      // the night ends in the quiet where the song loops, so the silence always means something
+      const inTail = song.currentTime > 64.6;
+      if (booted && !tailFired && inTail && Math.random() < .6) { tailFired = true; FAKES[1 + Math.floor(Math.random() * 3)](); }
+      if (song.currentTime < 5) tailFired = false;
+      if (elapsed >= NIGHT_LEN && (!songOK || inTail || elapsed > NIGHT_LEN + 70)) endNight();
+    }
+    requestAnimationFrame(frame);
+  }
+  pips(); $("night").textContent = night; requestAnimationFrame(frame);
+</script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html" };   // add "puzzle7.html": "puzzle8.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
+</script>
+</body>
+</html>

@@ -78,7 +78,8 @@
 </head>
 <body>
 <noscript><p style="color:#888;padding:2rem;font-family:serif">This needs JavaScript to run.</p></noscript>
-<div id="fog"></div><div id="shade"></div><canvas id="noise" width="96" height="96"></canvas>
+<div id="fog"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="warp" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence id="tb" type="fractalNoise" baseFrequency="0.01 0.04" numOctaves="2" seed="2" result="n"/><feDisplacementMap id="dm" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter></svg><div id="shade"></div><canvas id="noise" width="96" height="96"></canvas>
 
 <main id="stage">
   <h1>IV</h1>
@@ -108,18 +109,17 @@
 
   <section id="p4" class="sec out" hidden>
     <p id="shout"></p>
-    <button id="tell">tell someone</button><div id="prog"><i></i></div>
+    <button id="tell">hold on</button><div id="prog"><i></i></div>
   </section>
 
   <section id="end" class="sec out" hidden>
-    <p class="w">I told someone.</p>
-    <p>It did not fix everything. It made the room bigger.</p>
-    <p>It only ever needed what I had. I gave it piece after piece, and I called that love.</p>
-    <p>The dream is still long. I am not walking through it alone anymore.</p>
+    <p class="w">I held on until the voice got tired.</p>
+    <p>That is all it was. It got tired.</p>
+    <p>Tomorrow it won't be.</p>
+    <p>I am not better. I need that to be clear. I am only still here.</p>
     <p class="w dim">- X</p>
     <p id="tally" class="w"></p>
     <p id="thanks" class="w"></p>
-    <p class="dim">If any of this sounded familiar, tell someone you trust today: a friend, family, a teacher, a doctor. Asking is allowed. If you are ever in danger, call your local emergency number.</p>
     <p><a id="endgo" href="puzzle5.html" style="color:#bdbdbd;text-decoration:underline;text-underline-offset:4px">continue</a></p>
   </section>
 
@@ -138,7 +138,7 @@
   const flash = (t, ms = 2200) => { $("note").textContent = t; setTimeout(() => { if ($("note").textContent === t) $("note").textContent = ""; }, ms); };
   const jolt = () => {
     if (!calm) $("stage").animate([{ transform: "translateX(-12px)" }, { transform: "translateX(10px)" }, { transform: "translateX(-4px)" }, { transform: "none" }], { duration: 280 });
-    tone("sine", 120, 40, .4, .3); glitch(.7, .28); document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit");
+    tone("sine", 120, 40, .4, .3); glitch(.7, .28); try { navigator.vibrate && navigator.vibrate([40, 30, 40]); } catch (e) {} document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit");
   };
   const say = t => { const p = document.createElement("p"); p.textContent = t; $("say").appendChild(p); };
 
@@ -206,7 +206,7 @@
 
   /* ---------- stages ---------- */
   let cur = "intro";
-  const LV = [[1, .8], [.75, .6], [.5, .45], [.25, .25], [0, 0]];
+  const LV = [[1, .8], [1, .7], [1, .6], [1, .5], [1, .4]];
   function setLevel(i) { $("stage").style.setProperty("--g", LV[i][0]); $("stage").style.setProperty("--b", LV[i][1] + "px"); }
   function go(id, cap, lvl) {
     const prev = $(cur), next = $(id); prev.classList.add("out"); setTimeout(() => prev.hidden = true, 1000);
@@ -314,32 +314,32 @@
   }
   function done3() {
     p3on = false; $("bst").textContent = "";
-    setTimeout(() => { say("I learned to breathe like it was a task. It was."); svBase = .4; go("p4", "The voice is loudest at the door.", 3); }, 1800);
+    setTimeout(() => { say("I learned to breathe like it was a task. It was."); svBase = .4; go("p4", "The voice is loudest at night.", 3); }, 1800);
   }
 
   /* ---------- 4: tell someone. It is the one door the voice keeps shut. ---------- */
-  const SHOUT = ["Don't.", "It's fine.", "They'll worry.", "Keep it quiet.", "Not now.", "You're overreacting.", "It's only a game. Close it.", "Nobody is reading this."];
+  const SHOUT = ["Let go.", "It's fine.", "Why bother.", "Sleep.", "Not now.", "Stop.", "It's only a game. Close it.", "Nobody is reading this."];
   let p4on = false, h4 = false, prog = 0, shoutT = 0;
   $("tell").addEventListener("pointerdown", e => { e.preventDefault(); if (p4on) { h4 = true; holdFx(true); } });
   const rel4 = () => { if (h4 && p4on && prog > .35 && prog < 1) { jolt(); flash("Don't let go.", 1800); } h4 = false; holdFx(false); }; addEventListener("pointerup", rel4); addEventListener("pointercancel", rel4);
   function enterP4() {
     p4on = true; prog = 0; $("shout").textContent = "It's fine.";
-    setTimeout(() => { if (p4on && !h4) $("cap").textContent = "Hold. It only gets loud because it is losing."; }, 10000);
+    setTimeout(() => { if (p4on && !h4) $("cap").textContent = "Hold. Just until it gets tired."; }, 10000);
   }
   function done4() {
-    p4on = false; h4 = false; holdFx(false); $("stage").style.transform = ""; $("shout").textContent = "";
-    svBase = 0; svBump = 0; document.body.classList.add("warm"); setLevel(4); $("fog").style.opacity = 0;
-    $("thanks").textContent = `Thank you for staying, ${NAME}. You can close this page now. But if you have a minute, tell someone something real today.`;
+    p4on = false; h4 = false; holdFx(false); $("stage").style.transform = ""; $("stage").style.filter = ""; $("stage").style.transition = ""; $("dm").setAttribute("scale", 0); $("shout").textContent = "";
+    svBase = .18; svBump = 0; setLevel(4);
+    $("thanks").textContent = `Thank you for staying, ${NAME}.`;
     const n = ["nl1", "nl2", "nl3", "nl4"].reduce((a, k) => a + (+localStorage.getItem(k) || 0), 0);
     $("tally").textContent = n > 0 ? `You got it wrong ${n} time${n === 1 ? "" : "s"}. You are still here.` : "You never fell once. Be gentle with the ones who do.";
-    [261.6, 329.6, 392].forEach((f, i) => setTimeout(() => tone("sine", f, f, .1, 6), i * 700));      // a soft chord
+    tone("sine", 110, 110, .1, 8); tone("sine", 116.5, 116.5, .05, 8);      // one low, unresolved note
     go("end", "", 4);
     setTimeout(() => [...document.querySelectorAll("#end p")].forEach((p, i) => setTimeout(() => p.classList.add("on"), i * 3000)), 2600);
   }
   const enter = { p1: enterP1, p2: enterP2, p3: enterP3, p4: enterP4 };
 
   /* ---------- loop ---------- */
-  let last = performance.now(), gAcc = 0;
+  let last = performance.now(), gAcc = 0, vibe = 0;
   function frame(now) {
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     svBump = Math.max(0, svBump - dt * .07);
@@ -371,14 +371,23 @@
       if (ph === 2 && el > 4.5) fail3("Too long.");
     }
     if (p4on) {
-      prog = h4 ? prog + dt / 4.2 : Math.max(0, prog - dt / .7); p4prog = prog;
+      prog = h4 ? prog + dt / 9 : Math.max(0, prog - dt / .9); p4prog = prog;
       document.querySelector("#prog i").style.width = Math.min(100, prog * 100) + "%";
-      if (hOsc) { hOsc.frequency.setTargetAtTime(55 + prog * 190, ac.currentTime, .05); hG.gain.setTargetAtTime(prog * .11, ac.currentTime, .05); }
-      gAcc += dt; if (h4 && gAcc > .3) { gAcc = 0; glitch(prog * .5, .1); }
+      if (hOsc) { hOsc.frequency.setTargetAtTime(55 + prog * 190, ac.currentTime, .05); hG.gain.setTargetAtTime(prog * prog * .2 + prog * .04, ac.currentTime, .05); }
+      gAcc += dt; if (h4 && gAcc > Math.max(.1, .3 - prog * .2)) { gAcc = 0; glitch(prog * .7, .1); }
       if (h4) {
-        shoutT += dt; if (shoutT > .7) { shoutT = 0; $("shout").textContent = rnd(SHOUT); }
-        if (!calm) $("stage").style.transform = `translate(${(Math.random() - .5) * prog * 8}px,${(Math.random() - .5) * prog * 5}px)`;
-      } else $("stage").style.transform = "";
+        shoutT += dt; if (shoutT > Math.max(.25, .7 - prog * .5)) { shoutT = 0; $("shout").textContent = rnd(SHOUT); }
+        if (!calm) {
+          const k = prog * prog;                                   // it turns violent near the end
+          $("stage").style.transition = "none";
+          $("stage").style.transform = `translate(${(Math.random() - .5) * k * 60}px,${(Math.random() - .5) * k * 30}px) skewX(${(Math.random() - .5) * k * 14}deg) scale(${1 + (Math.random() - .5) * k * .08})`;
+          $("tb").setAttribute("baseFrequency", `${(.005 + Math.random() * .03 * (.3 + k)).toFixed(4)} ${(.02 + Math.random() * .08 * (.3 + k)).toFixed(4)}`);
+          $("dm").setAttribute("scale", (k * 110 + prog * 12).toFixed(1));
+          $("stage").style.filter = `grayscale(1) blur(${(k * 3).toFixed(1)}px) contrast(${(1 + k * 1.2).toFixed(2)}) url(#warp)`;
+          if (Math.random() < k * .25) { document.body.classList.remove("hit"); void document.body.offsetWidth; document.body.classList.add("hit"); }
+          vibe += dt; if (vibe > .22) { vibe = 0; try { navigator.vibrate && navigator.vibrate(15 + prog * 40); } catch (e) {} }
+        }
+      } else { $("stage").style.transform = ""; $("stage").style.filter = ""; $("stage").style.transition = ""; $("dm").setAttribute("scale", 0); }
       $("shout").style.color = `rgb(${68 + prog * 150},${68 + prog * 150},${68 + prog * 150})`;
       if (prog >= 1) done4();
     }
@@ -387,8 +396,32 @@
   requestAnimationFrame(frame);
   $("endgo").addEventListener("click", e => {
     e.preventDefault(); try { localStorage.setItem("nlcarry", "1"); } catch (x) {}
-    document.body.style.transition = "opacity 1.6s"; document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle5.html", 1700);
+    glitch(.9, .6); tone("sine", 110, 55, .3, 2.5);
+    if (!calm) { let k = 0; const iv = setInterval(() => {
+      k += .05; $("stage").style.transition = "none"; $("stage").style.filter = "grayscale(1) url(#warp)";
+      $("dm").setAttribute("scale", (k * k * 260).toFixed(0)); $("tb").setAttribute("baseFrequency", `${(.01 + Math.random() * .04).toFixed(3)} ${(.03 + Math.random() * .1).toFixed(3)}`);
+      if (k >= 1) clearInterval(iv);
+    }, 40); }
+    document.body.style.transition = "opacity 1.4s .5s"; document.body.style.opacity = 0; setTimeout(() => location.href = "puzzle5.html", 2000);
   });
+</script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html" };   // add "puzzle7.html": "puzzle8.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
 </script>
 </body>
 </html>

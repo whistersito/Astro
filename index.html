@@ -252,5 +252,23 @@
   }
   requestAnimationFrame(frame);
 </script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html" };   // add "puzzle7.html": "puzzle8.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
+</script>
 </body>
 </html>

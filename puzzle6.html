@@ -20,6 +20,10 @@
   .voice { position:fixed; z-index:15; pointer-events:none; opacity:0; color:#444; }
   #wake { position:fixed; inset:0; z-index:30; background:#000; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity 2s; }
   #wake p { color:var(--dim); margin:0; animation:bl 3s ease-in-out infinite; } @keyframes bl { 50% { opacity:.3; } }
+  #dot { position:absolute; width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:0 0 18px 4px rgba(255,255,255,.7); animation:bl 2.4s ease-in-out infinite; }
+  #wake p { margin-top:3rem !important; }
+  #crt.tvon { animation:tvon 1.4s ease-out; }
+  @keyframes tvon { 0% { transform:scale(1,.004); filter:brightness(7); } 45% { transform:scale(1,.004); filter:brightness(7); } 75% { transform:scale(1,1.03); filter:brightness(2.2); } 100% { transform:none; filter:none; } }
   #wake.off { opacity:0; pointer-events:none; }
 
   #crt { position:relative; z-index:2; max-width:44rem; margin:0 auto; padding:3vh 1rem 14vh; box-sizing:border-box; }
@@ -40,7 +44,7 @@
 <body>
 <noscript><p style="padding:2rem">This needs JavaScript to run.</p></noscript>
 <div id="fog"></div><canvas id="noise" width="96" height="96"></canvas><div id="scan"></div>
-<div id="wake"><p id="wp">tap to open the archive</p></div>
+<div id="wake"><i id="dot"></i><p id="wp">tap to open the archive</p></div>
 
 <main id="crt">
   <div id="bar"><span>ARCHIVE</span><span id="prog">DOOR 6 / 15 &middot; FILES 0 / 5</span></div>
@@ -79,7 +83,9 @@
   const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
   const F = {
     "readme.txt": { open: true, text: ["You made it through the dream.", "I kept the rest of it here.", "",
-      "Everything I locked, I locked with something you already did.", "Tap a file. Then:  unlock <file> <password>", "Lost? Try  help.  The voice will charge you for hints."] },
+      "Everything I locked, I locked with something you already did.", "Tap a file. Then:  unlock <file> <password>", "Lost? Try  help.  The voice will charge you for hints.", "", "diary.txt was never locked. Nobody ever asked to read it."] },
+    "diary.txt": { open: true, text: ["[diary.txt]", "Night 31.   I didn't leave the bed until it got dark again.", "Night 58.   Cereal for dinner. Fourth day in a row. I don't mind. I don't mind anything.",
+      "Night 90.   Someone asked how I was. I said fine. They looked relieved.", "Night 112.  I wrote the pieces down so I would remember what I gave away.", "Night 140.  Nothing is different. That is the part no one tells you. Nothing is different."] },
     "memory.enc": { pw: p => same(words(p), ["eye", "kidney", "limbs", "lungs", "heart"]),
       hint: "What did he give away? Say it in the order he gave it.",
       text: ["[memory.enc]", "He kept a list of what he gave away.", "He wrote it fast, thirteen steps from the truth."], frag: T.rot13.enc("3 HERE") },
@@ -94,7 +100,7 @@
       text: ["[breath.sh]", "He learned to breathe like it was a task.", "Sixteen symbols; two for each thing he said out loud."], frag: T.hex.enc("4 WITH") },
     "return.txt": { pw: p => same(words(p), ["heart", "lungs", "limbs", "kidney", "eye"]),
       hint: "What was given last must return first.",
-      text: ["[return.txt]", "He was put back together, piece by piece.", "Read it in a mirror. First becomes last."], frag: T.atbash.enc("2 STAY") },
+      text: ["[return.txt]", "He was put back together, piece by piece.", "That is not the same as being well.", "Read it in a mirror. First becomes last."], frag: T.atbash.enc("2 STAY") },
     "door.enc": { door: true, hint: "Five fragments. Each one carries its own number. Say it out loud." },
     ".shadow": { open: true, hidden: true, text: ["You don't need the hints.", "If you are tired, tell the door you're fine. It opens for that.", "(try it)"] }
   };
@@ -129,7 +135,7 @@
     for (let i = 0; i < len; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; }
     const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 170;
     droneG = ac.createGain(); droneG.gain.value = 0; s.connect(f); f.connect(droneG); droneG.connect(ac.destination); s.start();
-    $("wake").classList.add("off"); startUp();
+    $("wake").classList.add("off"); $("crt").classList.add("tvon"); setTimeout(() => $("crt").classList.remove("tvon"), 1500); startUp();
   }
   $("wake").addEventListener("click", boot);
   document.body.style.opacity = 0; setTimeout(() => document.body.style.opacity = 1, 50);
@@ -253,7 +259,7 @@
   async function finale() {
     chime(4); glitch(.4, .4); localStorage.setItem("nlp6", "1");
     await say(["", { h: ">>> door.enc ......... open", c: "ok" }, "", { h: "DOOR 6 / 15", c: "ok" }, ""], 400);
-    await say(["He wrote:  \u201CI stopped dreaming at 4:12 in the morning. I stayed anyway.\u201D", "",
+    await say(["He wrote:  \u201CI haven't slept properly in months. I'm not telling you so you can fix it.\u201D", "",
       "He wrote:  \u201CPlease stay here with me. Not forever. Only for the next door.\u201D", "",
       `You stayed for five locked files, ${esc(NAME)}. I counted.`, `Mistakes so far: ${["nl1", "nl2", "nl3", "nl4", "nl5", "nl6"].reduce((a, k) => a + get(k), 0)}.   Hints you paid for: ${get("nlh")}.`, "",
       { h: "Nine doors left.", c: "ok" }, ""], 1400);
@@ -277,6 +283,24 @@
       const m = Object.keys(F).filter(k => !F[k].hidden && last && k.startsWith(last)); if (m.length === 1) { parts.push(m[0]); inp.value = parts.join(" ") + " "; } }
   });
   document.addEventListener("click", e => { if (booted && !window.getSelection().toString() && e.target.tagName !== "BUTTON") inp.focus(); });
+</script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html" };   // add "puzzle7.html": "puzzle8.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
 </script>
 </body>
 </html>
