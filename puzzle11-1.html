@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#000000"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E"><title>XI</title><style>
+:root{--fg:#bdbdbd;--dim:#5e5e5e;--red:#9a3a3a;--gold:#f0d9a6}
+html{-webkit-tap-highlight-color:transparent}html,body{margin:0;background:#000;color:var(--fg)}
+body{font-family:"Courier New",Courier,monospace;font-size:15px;line-height:1.6;transition:opacity 2s;overflow-x:hidden;touch-action:manipulation}
+button{all:unset;cursor:pointer}
+#noise{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;mix-blend-mode:overlay;image-rendering:pixelated;opacity:.1}
+#vig{position:fixed;inset:0;z-index:29;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,#000 105%);opacity:.55;transition:opacity .3s}
+#wake{position:fixed;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:opacity 2.5s;padding:1.4rem}
+#wake .a{animation:bl 3s ease-in-out infinite}#wake .b{color:var(--dim);font-size:.85rem}@keyframes bl{50%{opacity:.3}}#wake.off{opacity:0;pointer-events:none}
+.wrap{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:2.5vh 1rem 12vh;box-sizing:border-box}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:.8rem;color:var(--dim);font-size:.85rem;border-bottom:1px solid #1a1a1a;padding-bottom:.4rem;margin-bottom:1rem}
+.hbtn{border:1px solid #2a2a2a;padding:.1rem .7rem;color:var(--dim)}.hbtn:hover{color:#fff;border-color:#666}
+.dim{color:var(--dim)}.err{color:var(--red)}.ok{color:var(--gold)}
+.go{color:var(--fg);text-decoration:underline;text-underline-offset:4px;display:inline-block;margin-top:1rem;cursor:pointer}
+#msg{min-height:1.7em;color:var(--red);text-align:center;margin:.6rem 0}#cap{min-height:3.4em;color:var(--dim);font-style:italic;text-align:center;margin:.4rem 0}
+#frag,#memp{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;padding:1.4rem;box-sizing:border-box;overflow-y:auto}
+#frag[hidden],#memp[hidden]{display:none}.card{max-width:32rem;width:100%}.card p{margin:.7rem 0}
+body.hit{animation:hit .5s steps(2,end)}@keyframes hit{0%,100%{background:#000}30%{background:#1a0000}}
+.voice{position:fixed;z-index:28;pointer-events:none;opacity:0;color:#555}
+.wheels{display:flex;justify-content:center;gap:.6rem;margin:1rem 0}.wheels button{width:48px;height:64px;line-height:64px;text-align:center;font-size:2rem;background:#000;border:1px solid #555;color:#e6dcc0;user-select:none}
+@media (prefers-reduced-motion:reduce){body.hit{animation:none}}
+[hidden]{display:none!important}
+
+#chat{display:flex;flex-direction:column;gap:.8rem;margin:1rem 0}
+.b{max-width:88%;padding:.6rem .9rem;border:1px solid #222;background:#070707;opacity:0;animation:fi 1.4s forwards}
+.b.x{align-self:flex-start}.b.me{align-self:flex-end;border-color:#555;color:#fff}@keyframes fi{to{opacity:1}}
+#opts{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin:1rem 0}
+#opts button{border:1px solid #444;padding:.55rem .9rem;color:#ddd;user-select:none}#opts button:hover{border-color:#aaa;color:#fff}
+#lvw{text-align:center;margin-top:1.6rem}#lv{border:1px solid #666;padding:.7rem 1.6rem;color:#fff;font-size:1.05rem;transition:margin .2s}
+#glp{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;padding:1.4rem;box-sizing:border-box;overflow-y:auto}
+</style></head><body><noscript><p style="padding:2rem">This needs JavaScript to run.</p></noscript>
+<canvas id="noise" width="96" height="96"></canvas><div id="vig"></div>
+<div id="wake"><div><p class="a">tap to begin</p><p class="b">headphones.</p></div></div>
+<div id="frag" hidden><div class="card" id="fc"></div></div><div id="memp" hidden><div class="card" id="mc"></div></div>
+
+<main class="wrap">
+  <div class="hud"><span>XI &middot; THE CALL</span><button id="glb" class="hbtn">what do they mean?</button><button id="hnb" class="hbtn">hint</button><button id="memb" class="hbtn">memories</button></div>
+  <p id="cap"></p><div id="chat"></div><div id="opts"></div>
+  <div id="lvw"><button id="lv" hidden>leave</button></div>
+  <p id="msg" role="status"></p>
+</main>
+<div id="glp" hidden><div class="card" id="gc"></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const get=k=>{try{return +localStorage.getItem(k)||0}catch(e){return 0}};
+const bump=k=>{try{localStorage.setItem(k,get(k)+1)}catch(e){}};
+const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+let ac,booted=false,stat=0,last=performance.now();
+function tone(type,f0,f1,v,dur){if(!ac)return;const n=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f0,n);o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),n+dur);g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+.005);g.gain.exponentialRampToValueAtTime(.001,n+dur);o.connect(g);g.connect(ac.destination);o.start(n);o.stop(n+dur+.05)}
+function glitch(v=.5,dur=.25){if(!ac)return;v=Math.min(v,.6);const n=ac.currentTime,len=Math.floor(ac.sampleRate*dur),buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++){d[i]=(Math.random()*2-1)*(1-i/len);if(i%37<6)d[i]*=3}const src=ac.createBufferSource();src.buffer=buf;const ws=ac.createWaveShaper(),c=new Float32Array(256);for(let i=0;i<256;i++)c[i]=Math.tanh((i/128-1)*6);ws.curve=c;const f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=700+Math.random()*2400;f.Q.value=.9;const g=ac.createGain();g.gain.value=v*.5;src.connect(f);f.connect(ws);ws.connect(g);g.connect(ac.destination);src.start(n);tone("sawtooth",140+Math.random()*80,40,v*.16,dur)}
+const jolt=()=>{glitch(.7,.28);try{navigator.vibrate&&navigator.vibrate([40,30,40])}catch(e){}document.body.classList.remove("hit");void document.body.offsetWidth;document.body.classList.add("hit")};
+const say=(t,ms=2600)=>{$("msg").textContent=t;setTimeout(()=>{if($("msg").textContent===t)$("msg").textContent=""},ms)};
+const cap=t=>{$("cap").textContent=t};
+const nctx=$("noise").getContext("2d"),img=nctx.createImageData(96,96);
+setInterval(()=>{for(let i=0;i<img.data.length;i+=4){const v=Math.random()*255;img.data[i]=img.data[i+1]=img.data[i+2]=v;img.data[i+3]=255}nctx.putImageData(img,0,0);stat=Math.max(0,stat-.02);$("noise").style.opacity=.05+stat*.5},90);
+function mkBuf(brown){const len=ac.sampleRate*3,b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.5}else d[i]=w}return b}
+function loop(buf,type,f,q,g){const s=ac.createBufferSource();s.buffer=buf;s.loop=true;const fl=ac.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;const gn=ac.createGain();gn.gain.value=g;s.connect(fl);fl.connect(gn);gn.connect(ac.destination);s.start();return gn}
+function whisper(t){if(calm)return;const e=document.createElement("span");e.className="voice";e.textContent=t;e.style.left=Math.random()*70+"%";e.style.top=Math.random()*85+"%";e.style.fontSize=(1+Math.random()*1.5)+"rem";document.body.appendChild(e);glitch(.1,.12);e.animate([{opacity:0},{opacity:.6},{opacity:0}],{duration:1400}).onfinish=()=>e.remove()}
+const MEM=()=>{try{return JSON.parse(localStorage.getItem("nlmem")||"[]")}catch(e){return[]}};
+function addMem(id,t){const m=MEM();if(m.find(x=>x.id===id))return;m.push({id,t});try{localStorage.setItem("nlmem",JSON.stringify(m))}catch(e){}}
+$("memb").onclick=()=>{if(!booted)return;const m=MEM();$("mc").innerHTML='<div class="dim">MEMORIES</div>'+(m.length?m.map(x=>"<p>"+x.t+"</p>").join(""):'<p class="dim">nothing yet.</p>')+'<span class="go" id="memx">close</span>';$("memp").hidden=false;$("memx").onclick=()=>{$("memp").hidden=true}};
+async function showFrag(title,lines,after){const f=$("frag"),c=$("fc");c.innerHTML='<div class="dim">'+title+"</div>";f.hidden=false;for(const l of lines){const p=document.createElement("p");p.textContent=l;p.style.opacity=0;p.style.transition="opacity 1.6s";c.appendChild(p);void p.offsetWidth;p.style.opacity=1;tone("sine",196,196,.04,1.4);await sleep(calm?500:2300)}const b=document.createElement("span");b.className="go";b.textContent="continue";b.onclick=()=>{f.hidden=true;after&&after()};c.appendChild(b)}
+const leave=u=>{document.body.style.opacity=0;setTimeout(()=>location.href=u,2100)};
+function wheels(el,n){const d=Array(n).fill(0);d.forEach((_,i)=>{const b=document.createElement("button");b.textContent="0";b.onclick=()=>{d[i]=(d[i]+1)%10;b.textContent=d[i];tone("square",1200,700,.02,.03)};el.appendChild(b)});return d}
+function boot(){if(booted)return;booted=true;ac=new(window.AudioContext||window.webkitAudioContext)();ac.resume();$("wake").classList.add("off");start()}
+$("wake").addEventListener("click",boot);
+document.body.style.opacity=0;setTimeout(()=>document.body.style.opacity=1,50);
+
+const TACT={GUILT:"makes you feel you owe them for what they gave or suffered. e.g. \"after everything I sacrificed for you...\"",
+ ISOLATION:"pushes away the people who could help you see clearly. e.g. \"they don't understand you like I do.\"",
+ GASLIGHTING:"makes you doubt your own memory or judgment. e.g. \"that never happened. you're too sensitive.\"",
+ FLATTERY:"praises you as the only one who matters, to hook you. e.g. \"you're different. only you get me.\"",
+ FEAR:"threatens loss, harm or abandonment so you stay. e.g. \"if you go, don't be surprised what happens.\""};
+const NAME=(()=>{try{return localStorage.getItem("nlname")||"you"}catch(e){return "you"}})();
+const st0=(()=>{try{return +localStorage.getItem("nlstart")||Date.now()}catch(e){return Date.now()}})();
+const mins=Math.max(1,Math.round((Date.now()-st0)/60000)),mis=["nl1","nl2","nl3","nl4","nl5","nl6","nl7","nl8","nl9","nl10"].reduce((a,k)=>a+get(k),0);
+const M=[{t:`I gave up everything for you, ${NAME}. And you can't stay five more minutes?`,a:"GUILT"},
+ {t:"Don't tell anyone about this. They wouldn't understand us.",a:"ISOLATION"},
+ {t:"You're misremembering. I never said that. You always get things wrong when you're tired.",a:"GASLIGHTING"},
+ {t:"You're the only person who ever really saw me. Nobody else will ever care like you do.",a:"FLATTERY"},
+ {t:"If you close this page, I don't know what I'll do. You know how I get.",a:"FEAR"},
+ {t:`You made ${mis} mistakes in my house and I never counted one against you. Not once. ${mins} minutes, and I kept every one of them.`,a:"GUILT"}];
+const HURT=["Wow. After everything I did for you.","You're not even trying to understand me.","See? This is why nobody stays."],LV=["Ten more minutes. Please. I'll stop. I promise.","Go, then. See who answers when you need someone."];
+let i=0,runWrong=0,locked=false,lc=0;const chat=$("chat");
+function bub(t,c){const d=document.createElement("div");d.className="b "+c;d.textContent=t;chat.appendChild(d);tone("sine",196,196,.03,.6);d.scrollIntoView({block:"nearest"})}
+Object.keys(TACT).forEach(k=>{const b=document.createElement("button");b.textContent=k.toLowerCase();b.onclick=()=>pick(k);$("opts").appendChild(b)});
+$("glb").onclick=()=>{$("gc").innerHTML='<div class="dim">TACTICS</div>'+Object.entries(TACT).map(([k,v])=>"<p><b>"+k+"</b><br>"+v+"</p>").join("")+'<span class="go" id="glx">close</span>';$("glp").hidden=false;$("glx").onclick=()=>{$("glp").hidden=true}};
+function ask(){if(i>=M.length)return fin();bub(M[i].t,"x")}
+function pick(k){if(locked||!booted)return;
+  if(k===M[i].a){bub(k.toLowerCase(),"me");tone("sine",523,523,.06,1);i++;locked=true;setTimeout(()=>{locked=false;ask()},900)}
+  else{runWrong++;bump("nl11");jolt();stat=1;$("vig").style.opacity=Math.min(.92,.55+runWrong*.12);bub(rnd(HURT),"x");if(runWrong>=3)restart()}}
+function restart(){locked=true;say("It started over.",3000);setTimeout(()=>{chat.innerHTML="";i=0;runWrong=0;$("vig").style.opacity=.55;locked=false;ask()},1800)}
+async function fin(){locked=true;$("opts").style.visibility="hidden";await sleep(900);bub("You see it. Of course you do.","x");await sleep(2400);bub("And you're still here.","x");await sleep(2400);cap("Then leave.");$("lv").hidden=false;locked=false}
+$("lv").onclick=()=>{lc++;jolt();if(lc<3){bub(LV[lc-1],"x");$("lv").style.marginLeft=(Math.random()*50-25)+"%"}else{bub("...","x");$("lv").hidden=true;localStorage.setItem("nlp11","1");setTimeout(()=>leave("puzzle12.html"),2200)}};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&booted)say("You left. I counted. Come back, "+NAME+".",4000)});
+function start(){loop(mkBuf(true),"lowpass",150,.5,.18);cap("He is talking to you now. Not to her. Name what he is doing.");ask()}
+const HINTS=["Open the glossary. Every message uses one tactic. Match what it makes you feel.", "Absolutes about people are isolation or flattery. Threats are fear. \"You owe me\" is guilt. \"You remember it wrong\" is gaslighting.", "In order: guilt, isolation, gaslighting, flattery, fear, guilt. Then press leave three times."];let hl=0;
+$("hnb").onclick=()=>{if(!booted)return;cap(HINTS[hl]);bump("nlh");hl=Math.min(2,hl+1);$("hnb").textContent="hint "+hl+"/3"};
+</script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html",
+                 "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html",
+                 "puzzle10.html": "puzzle11.html", "puzzle11.html": "puzzle12.html" };   // add "puzzle12.html": "puzzle13.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
+</script>
+</body></html>
