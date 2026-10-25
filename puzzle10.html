@@ -39,7 +39,7 @@ body.hit{animation:hit .5s steps(2,end)}@keyframes hit{0%,100%{background:#000}3
 <div id="frag" hidden><div class="card" id="fc"></div></div><div id="memp" hidden><div class="card" id="mc"></div></div>
 
 <main class="wrap">
-  <div class="hud"><span>X &middot; THE BATH</span><span id="lvl">water 55%</span><button id="memb" class="hbtn">memories</button></div>
+  <div class="hud"><span>X &middot; THE BATH</span><span id="lvl">water 55%</span><button id="hnb" class="hbtn">hint</button><button id="memb" class="hbtn">memories</button></div>
   <p id="cap">The tub is filling. Turn the valves in the order he cut them off.</p>
   <div id="tub"><div id="water"></div><div id="boy"></div></div>
   <div id="valves"><button data-v="friends">friends</button><button data-v="doctor">doctor</button><button data-v="family">family</button><button data-v="work">work</button></div>
@@ -94,6 +94,8 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;tG+=dt;
   $("water").style.height=level+"%";$("lvl").textContent="water "+Math.round(level)+"%";
   document.querySelectorAll(".ph").forEach(p=>{p.style.bottom=(Math.max(2,Math.min(70,level-12-(+p.dataset.o||0))))+"%"});
   requestAnimationFrame(frame)}
+const HINTS=["Open the memories. Each one says which cut came first, second, third, fourth.", "He did not isolate her all at once. Rebuild the order from the memories.", "Turn the valves in this order: friends, doctor, family, work. One wrong valve closes them all."];let hl=0;
+$("hnb").onclick=()=>{if(!booted)return;cap(HINTS[hl]);bump("nlh");hl=Math.min(2,hl+1);$("hnb").textContent="hint "+hl+"/3"};
 </script>
 <script>
 /* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
@@ -101,7 +103,9 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;tG+=dt;
   if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
   const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
                  "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html",
-                 "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html" };   // add "puzzle10.html": "puzzle11.html" when it exists
+                 "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html",
+                 "puzzle10.html": "puzzle11.html", "puzzle11.html": "puzzle12.html",
+                 "puzzle12.html": "puzzle13.html" };   // add "puzzle13.html": "puzzle14.html" when it exists
   const CODE = atob("Z2FiYnk="); let buf = "";
   addEventListener("keydown", e => {
     if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
@@ -112,6 +116,39 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;tG+=dt;
     try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
     document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
   });
+})();
+</script>
+<script>
+/* EXTRAS: remembers how far you got, and a sound switch (also stops the loud scare) */
+(() => {
+  const f = location.pathname.split("/").pop() || "index.html", m = f.match(/puzzle(\d+)\.html/), n = m ? +m[1] : 1;
+  try { if (n > (+localStorage.getItem("nlmax") || 0)) localStorage.setItem("nlmax", n); } catch (e) {}
+  window.__muted = false;
+  const Orig = window.AudioContext;
+  if (Orig) {
+    window.AudioContext = class extends Orig { constructor(...a) { super(...a); if (window.__muted) { try { this.suspend(); } catch (e) {} } } };
+    const R = Orig.prototype.resume; Orig.prototype.resume = function () { return window.__muted ? Promise.resolve() : R.call(this); };
+  }
+  const b = document.createElement("button");
+  b.textContent = "sound: on"; b.setAttribute("aria-label", "toggle sound");
+  b.style.cssText = "all:unset;cursor:pointer;position:fixed;left:.6rem;bottom:.6rem;z-index:99;color:#777;font:12px 'Courier New',monospace;padding:.3rem .5rem;border:1px solid #222;background:rgba(0,0,0,.6)";
+  b.addEventListener("click", e => {
+    e.stopPropagation(); window.__muted = !window.__muted; b.textContent = "sound: " + (window.__muted ? "off" : "on");
+    try { if (typeof ac !== "undefined" && ac) { window.__muted ? ac.suspend() : ac.resume(); } } catch (x) {}
+    document.querySelectorAll("audio,video").forEach(v => v.muted = window.__muted);
+  });
+  document.body.appendChild(b);
+  if (n === 1) {                                         // title screen: offer to continue where she stopped
+    const mx = +localStorage.getItem("nlmax") || 1, t = document.getElementById("title");
+    if (mx > 1 && t) {
+      const d = document.createElement("div");
+      d.style.cssText = "margin-top:2.2rem;color:#777;font-size:.9rem;text-align:center;opacity:0;animation:show 2s 6s forwards";
+      d.innerHTML = '<a href="puzzle' + mx + '.html" style="color:#bbb">continue from puzzle ' + mx + '</a> &nbsp;&middot;&nbsp; <a href="#" id="rst" style="color:#777">start over</a>';
+      d.addEventListener("click", e => e.stopPropagation());
+      t.appendChild(d);
+      d.querySelector("#rst").addEventListener("click", e => { e.preventDefault(); try { localStorage.clear(); } catch (x) {} location.reload(); });
+    }
+  }
 })();
 </script>
 </body></html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#000000"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E"><title>XIII</title><style>
+:root{--fg:#bdbdbd;--dim:#5e5e5e;--red:#9a3a3a;--gold:#f0d9a6}
+html{-webkit-tap-highlight-color:transparent}html,body{margin:0;background:#000;color:var(--fg)}
+body{font-family:"Courier New",Courier,monospace;font-size:15px;line-height:1.6;transition:opacity 2s;overflow-x:hidden;touch-action:manipulation}
+button{all:unset;cursor:pointer}
+#noise{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;mix-blend-mode:overlay;image-rendering:pixelated;opacity:.1}
+#vig{position:fixed;inset:0;z-index:29;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,#000 105%);opacity:.55;transition:opacity .3s}
+#wake{position:fixed;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:opacity 2.5s;padding:1.4rem}
+#wake .a{animation:bl 3s ease-in-out infinite}#wake .b{color:var(--dim);font-size:.85rem}@keyframes bl{50%{opacity:.3}}#wake.off{opacity:0;pointer-events:none}
+.wrap{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:2.5vh 1rem 12vh;box-sizing:border-box}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:.8rem;color:var(--dim);font-size:.85rem;border-bottom:1px solid #1a1a1a;padding-bottom:.4rem;margin-bottom:1rem}
+.hbtn{border:1px solid #2a2a2a;padding:.1rem .7rem;color:var(--dim)}.hbtn:hover{color:#fff;border-color:#666}
+.dim{color:var(--dim)}.err{color:var(--red)}.ok{color:var(--gold)}
+.go{color:var(--fg);text-decoration:underline;text-underline-offset:4px;display:inline-block;margin-top:1rem;cursor:pointer}
+#msg{min-height:1.7em;color:var(--red);text-align:center;margin:.6rem 0}#cap{min-height:3.4em;color:var(--dim);font-style:italic;text-align:center;margin:.4rem 0}
+#frag,#memp{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;padding:1.4rem;box-sizing:border-box;overflow-y:auto}
+#frag[hidden],#memp[hidden]{display:none}.card{max-width:32rem;width:100%}.card p{margin:.7rem 0}
+body.hit{animation:hit .5s steps(2,end)}@keyframes hit{0%,100%{background:#000}30%{background:#1a0000}}
+.voice{position:fixed;z-index:28;pointer-events:none;opacity:0;color:#555}
+.wheels{display:flex;justify-content:center;gap:.6rem;margin:1rem 0}.wheels button{width:48px;height:64px;line-height:64px;text-align:center;font-size:2rem;background:#000;border:1px solid #555;color:#e6dcc0;user-select:none}
+@media (prefers-reduced-motion:reduce){body.hit{animation:none}}
+[hidden]{display:none!important}
+
+#tv{position:relative;width:100%;max-width:640px;aspect-ratio:4/3;margin:.6rem auto;background:#030303;border:2px solid #222;border-radius:14px/18px;overflow:hidden;box-shadow:0 0 50px #000 inset}
+#tv::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
+#scr{position:absolute;inset:0;padding:1rem;display:flex;flex-direction:column;justify-content:flex-end;text-shadow:1px 0 rgba(255,0,0,.55),-1px 0 rgba(0,255,255,.45)}
+#osd{position:absolute;left:1rem;top:.8rem;color:#fff;font-size:1.1rem;letter-spacing:.12em}#date{position:absolute;right:1rem;bottom:.7rem;color:var(--gold);font-size:.85rem;letter-spacing:.08em}
+#cam{color:#8f8f8f;font-style:italic;margin-bottom:.7rem;font-size:.9rem}#sub{margin-bottom:1.4rem}#sub p{margin:.3rem 0;color:#e8e8e8}
+#bar{position:absolute;left:0;right:0;top:0;height:10%;z-index:2;pointer-events:none;background:linear-gradient(transparent,rgba(255,255,255,.18),transparent);animation:roll 3.5s linear infinite}@keyframes roll{from{top:-15%}to{top:105%}}
+#cnt{font-size:1.9rem;letter-spacing:.2em;color:#fff;text-align:center;text-shadow:0 0 10px rgba(255,255,255,.25)}
+#ctl{display:flex;gap:.5rem;justify-content:center;margin:.6rem 0}#ctl button{border:1px solid #444;padding:.7rem 1rem;color:#ddd;user-select:none;touch-action:none;min-width:3rem;text-align:center}#ctl button.on{border-color:var(--gold);color:var(--gold)}
+.trkrow{display:flex;align-items:center;gap:.8rem;margin:.6rem 0}#trk{flex:1;accent-color:#aaa}
+#sleeve{border:1px dashed #333;padding:.8rem 1rem;margin-top:1rem;color:#9a9a9a;font-size:.88rem}#sleeve b{color:#cfcfcf}
+#end{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center;padding:1.4rem;box-sizing:border-box;overflow-y:auto}
+</style></head><body><noscript><p style="padding:2rem">This needs JavaScript to run.</p></noscript>
+<canvas id="noise" width="96" height="96"></canvas><div id="vig"></div>
+<div id="wake"><div><p class="a">tap to begin</p><p class="b">headphones. this one is sad, and it has sound.</p></div></div>
+<div id="frag" hidden><div class="card" id="fc"></div></div><div id="memp" hidden><div class="card" id="mc"></div></div>
+
+<audio id="song" src="La_fin__feat__Lucas_Clavel_.mp3" loop preload="auto"></audio>
+<main class="wrap">
+  <div class="hud"><span>XIII &middot; HOME VIDEO</span><button id="hnb" class="hbtn">hint</button><button id="memb" class="hbtn">memories</button></div>
+  <p id="cap">A tape was waiting in the basement. The label says: do not erase.</p>
+  <div id="tv"><div id="bar"></div><div id="scr"><div id="osd">STOP</div><div id="cam"></div><div id="sub"></div><div id="date"></div></div></div>
+  <div id="cnt">000</div>
+  <div id="ctl"><button id="rew">&#9664;&#9664;</button><button id="play">&#9654;</button><button id="ff">&#9654;&#9654;</button><button id="stop">&#9632;</button></div>
+  <div class="trkrow"><span class="dim">tracking</span><input id="trk" type="range" min="0" max="100" value="50" aria-label="tracking"></div>
+  <div id="sleeve"><b>HOME / DO NOT ERASE</b><br>I. &nbsp;the first lock he trusted &mdash; its first three numbers<br>II. the breath he learned &mdash; all three<br>III. the room where nothing was different &mdash; its first three</div>
+  <p id="msg" role="status"></p>
+</main>
+<div id="end" hidden><div class="card" id="ec"></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const get=k=>{try{return +localStorage.getItem(k)||0}catch(e){return 0}};
+const bump=k=>{try{localStorage.setItem(k,get(k)+1)}catch(e){}};
+const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+let ac,booted=false,stat=0,last=performance.now();
+function tone(type,f0,f1,v,dur){if(!ac)return;const n=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f0,n);o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),n+dur);g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+.005);g.gain.exponentialRampToValueAtTime(.001,n+dur);o.connect(g);g.connect(ac.destination);o.start(n);o.stop(n+dur+.05)}
+function glitch(v=.5,dur=.25){if(!ac)return;v=Math.min(v,.6);const n=ac.currentTime,len=Math.floor(ac.sampleRate*dur),buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++){d[i]=(Math.random()*2-1)*(1-i/len);if(i%37<6)d[i]*=3}const src=ac.createBufferSource();src.buffer=buf;const ws=ac.createWaveShaper(),c=new Float32Array(256);for(let i=0;i<256;i++)c[i]=Math.tanh((i/128-1)*6);ws.curve=c;const f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=700+Math.random()*2400;f.Q.value=.9;const g=ac.createGain();g.gain.value=v*.5;src.connect(f);f.connect(ws);ws.connect(g);g.connect(ac.destination);src.start(n);tone("sawtooth",140+Math.random()*80,40,v*.16,dur)}
+const jolt=()=>{glitch(.7,.28);try{navigator.vibrate&&navigator.vibrate([40,30,40])}catch(e){}document.body.classList.remove("hit");void document.body.offsetWidth;document.body.classList.add("hit")};
+const say=(t,ms=2600)=>{$("msg").textContent=t;setTimeout(()=>{if($("msg").textContent===t)$("msg").textContent=""},ms)};
+const cap=t=>{$("cap").textContent=t};
+const nctx=$("noise").getContext("2d"),img=nctx.createImageData(96,96);
+setInterval(()=>{for(let i=0;i<img.data.length;i+=4){const v=Math.random()*255;img.data[i]=img.data[i+1]=img.data[i+2]=v;img.data[i+3]=255}nctx.putImageData(img,0,0);stat=Math.max(0,stat-.02);$("noise").style.opacity=.05+stat*.5},90);
+function mkBuf(brown){const len=ac.sampleRate*3,b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.5}else d[i]=w}return b}
+function loop(buf,type,f,q,g){const s=ac.createBufferSource();s.buffer=buf;s.loop=true;const fl=ac.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;const gn=ac.createGain();gn.gain.value=g;s.connect(fl);fl.connect(gn);gn.connect(ac.destination);s.start();return gn}
+function whisper(t){if(calm)return;const e=document.createElement("span");e.className="voice";e.textContent=t;e.style.left=Math.random()*70+"%";e.style.top=Math.random()*85+"%";e.style.fontSize=(1+Math.random()*1.5)+"rem";document.body.appendChild(e);glitch(.1,.12);e.animate([{opacity:0},{opacity:.6},{opacity:0}],{duration:1400}).onfinish=()=>e.remove()}
+const MEM=()=>{try{return JSON.parse(localStorage.getItem("nlmem")||"[]")}catch(e){return[]}};
+function addMem(id,t){const m=MEM();if(m.find(x=>x.id===id))return;m.push({id,t});try{localStorage.setItem("nlmem",JSON.stringify(m))}catch(e){}}
+$("memb").onclick=()=>{if(!booted)return;const m=MEM();$("mc").innerHTML='<div class="dim">MEMORIES</div>'+(m.length?m.map(x=>"<p>"+x.t+"</p>").join(""):'<p class="dim">nothing yet.</p>')+'<span class="go" id="memx">close</span>';$("memp").hidden=false;$("memx").onclick=()=>{$("memp").hidden=true}};
+async function showFrag(title,lines,after){const f=$("frag"),c=$("fc");c.innerHTML='<div class="dim">'+title+"</div>";f.hidden=false;for(const l of lines){const p=document.createElement("p");p.textContent=l;p.style.opacity=0;p.style.transition="opacity 1.6s";c.appendChild(p);void p.offsetWidth;p.style.opacity=1;tone("sine",196,196,.04,1.4);await sleep(calm?500:2300)}const b=document.createElement("span");b.className="go";b.textContent="continue";b.onclick=()=>{f.hidden=true;after&&after()};c.appendChild(b)}
+const leave=u=>{document.body.style.opacity=0;setTimeout(()=>location.href=u,2100)};
+function wheels(el,n){const d=Array(n).fill(0);d.forEach((_,i)=>{const b=document.createElement("button");b.textContent="0";b.onclick=()=>{d[i]=(d[i]+1)%10;b.textContent=d[i];tone("square",1200,700,.02,.03)};el.appendChild(b)});return d}
+function boot(){if(booted)return;booted=true;ac=new(window.AudioContext||window.webkitAudioContext)();ac.resume();$("wake").classList.add("off");start()}
+$("wake").addEventListener("click",boot);
+document.body.style.opacity=0;setTimeout(()=>document.body.style.opacity=1,50);
+
+const SEG=[
+ {c:140,t:30,date:"SEP 14 1994  6:12 PM",cam:"[A bathroom. The camera sits on the sink. A boy, about eight, in a full tub. The water is not warm anymore.]",lines:[
+  "(A woman's voice, from the next room) Don't get out until I say. I need you close.",
+  "He is eight. He does not know yet that this is not what love sounds like.",
+  "(The boy, to no one) If I stay very still, she stays.",
+  "The water goes cold. He does not move.",
+  "He has learned that being needed is the only door that never closes."]},
+ {c:424,t:71,date:"MAR 03 2009  3:40 AM",cam:"[A hospital corridor. The camera hangs from a teenager's hand.]",lines:[
+  "(A nurse) You should go home. Get some sleep.",
+  "(The boy, seventeen) If she wakes up and I'm not here, she'll think I left.",
+  "(The nurse) Sweetheart, she isn't going to wake up the way you want.",
+  "He keeps filming. He thinks that if he records it, it can't leave.",
+  "That night he promises himself he will never be left again.",
+  "He does not yet know what that promise will cost the people who love him."]},
+ {c:941,t:52,date:"NIGHT 140  4:12 AM",cam:"[The living room you know. A suitcase by the door. The storm.]",lines:[
+  "(Her voice) I'm not leaving because you're sick. I'm leaving because I can't breathe in here.",
+  "(His voice, soft) After everything I gave up for you.",
+  "(Her voice) You never gave it to me. You kept it, so I would owe you.",
+  "(Silence. Rain on the glass.)",
+  "(His voice) Please. I'll change. I'll talk to someone. Just stay until morning.",
+  "(Her voice) You've promised that every time.",
+  "The door closes. The camera keeps recording the empty room for eleven minutes.",
+  "Then he picks it up. He is not crying.",
+  "He is already working out what he will say next."]}];
+const MEMS=["1994. A boy in a cold bath. He learned that being needed is the only door that never closes.","2009. A hospital corridor. He promised himself he would never be left again.","Night 140. She left. He kept recording an empty room for eleven minutes."];
+const FIN=["He recorded every night after that. One hundred and forty-one nights.","Each one began the same way: Ever since you left...","He still believes he is the one who was left.","He cannot stop. He means it every time he says he is sorry.","That is what makes it so hard to forgive."];
+SEG.forEach(s=>{s.prog=0;s.len=s.lines.length*6+4});
+const song=$("song");let pos=0,mode="stop",hold=null,holdT=0,trk=50,tt=0,done=[0,0,0],clickT=0,rT=0,hissG;
+const GL="#%?/|~\u2591\u2592";
+const garble=(t,e)=>{const k=Math.min(.7,e/60);return[...t].map(c=>c!==" "&&Math.random()<k?GL[Math.floor(Math.random()*GL.length)]:c).join("")};
+$("play").onclick=()=>{if(booted)mode=mode==="play"?"stop":"play"};$("stop").onclick=()=>{mode="stop"};
+function hb(id,dir){const b=$(id);b.addEventListener("pointerdown",e=>{e.preventDefault();if(!booted)return;hold=dir;holdT=0;mode="stop"});const r=()=>{if(hold===dir)hold=null};b.addEventListener("pointerup",r);b.addEventListener("pointercancel",r);b.addEventListener("pointerleave",r)}
+hb("ff","ff");hb("rew","rew");$("trk").addEventListener("input",e=>{trk=+e.target.value});
+const act=()=>{if(mode!=="play"||hold)return null;const i=SEG.findIndex((x,j)=>!done[j]&&Math.abs(pos-x.c)<=5);return i<0?null:i};
+function start(){song.preservesPitch=false;song.mozPreservesPitch=false;song.webkitPreservesPitch=false;song.volume=.5;song.play().catch(()=>{});
+  hissG=loop(mkBuf(false),"highpass",3200,.5,.012);requestAnimationFrame(frame)}
+function complete(i){tone("sine",523,523,.07,1.6);addMem("t"+i,MEMS[i]);say("tape "+done.filter(Boolean).length+" / 3 recovered",3500);if(done.every(Boolean))setTimeout(finale,6500)}
+function render(ai,good,err){
+  $("osd").textContent=hold?(hold==="ff"?"FF \u25B6\u25B6":"REW \u25C0\u25C0"):mode==="play"?"PLAY \u25B6":"STOP";$("cnt").textContent=String(Math.round(pos)).padStart(3,"0");
+  $("play").classList.toggle("on",mode==="play"&&!hold);
+  if(ai===null){$("cam").textContent=mode==="play"&&!hold?"NO SIGNAL":"";$("sub").innerHTML="";$("date").textContent="";return}
+  const s=SEG[ai],n=Math.min(s.lines.length,s.prog>1?Math.floor(s.prog/6)+1:0);$("date").textContent=s.date;$("cam").textContent=good?s.cam:garble(s.cam,err);
+  $("sub").innerHTML=s.lines.slice(0,n).slice(-4).map(l=>"<p>"+(good?l:garble(l,err))+"</p>").join("")}
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;tt+=dt;
+  const ai0=act();let v=0;if(hold){holdT+=dt;v=(hold==="ff"?1:-1)*(holdT<.6?10:70)}else if(mode==="play"&&ai0===null)v=.3;
+  pos=Math.max(0,Math.min(999,pos+v*dt));const ai=act(),eff=trk+Math.sin(tt*.5)*5,err=ai!==null?Math.abs(eff-SEG[ai].t):99,good=ai!==null&&err<=9;
+  if(good){const s=SEG[ai];s.prog+=dt;if(s.prog>=s.len){done[ai]=1;complete(ai)}}
+  rT+=dt;if(rT>.14){rT=0;render(ai,good,err)}
+  stat=ai!==null?(good?.04:Math.min(.9,.25+err/50)):(hold?.7:mode==="play"?.6:.12);
+  $("bar").style.opacity=good?.1:.7;$("bar").style.height=good?"10%":(8+Math.min(30,err/2))+"%";
+  $("scr").style.transform=(!calm&&(hold||(ai!==null&&!good)))?`translateX(${(Math.random()-.5)*(hold?3:10)}px)`:"";
+  if(hold){clickT+=dt;if(clickT>.07){clickT=0;tone("square",260+Math.random()*80,200,.015,.04)}}
+  const duck=good?.2:(mode==="play"?.5:.45);song.volume=Math.max(0,Math.min(1,song.volume+(duck-song.volume)*.05));
+  song.playbackRate=hold?2.4:1+Math.sin(tt*2.3)*.008+Math.sin(tt*.7)*.004;
+  if(hissG)hissG.gain.setTargetAtTime(.012+stat*.12,ac.currentTime,.1);
+  requestAnimationFrame(frame)}
+async function finale(){mode="stop";const c=$("ec");c.innerHTML='<div class="dim">END OF TAPE</div>';$("end").hidden=false;
+  for(const l of FIN){const p=document.createElement("p");p.textContent=l;p.style.cssText="opacity:0;transition:opacity 2s";c.appendChild(p);void p.offsetWidth;p.style.opacity=1;await sleep(3800)}
+  const w=document.createElement("div");w.style.marginTop="1.4rem";w.innerHTML='<span class="go" id="er">erase</span> &nbsp;&nbsp;&nbsp; <span class="go" id="kp">keep recording</span>';c.appendChild(w);
+  const after=t=>{w.remove();const p=document.createElement("p");p.textContent=t;c.appendChild(p);setTimeout(()=>{const a=document.createElement("span");a.className="go";a.textContent="continue";a.onclick=()=>{try{localStorage.setItem("nlp13","1")}catch(e){}leave("puzzle14.html")};c.appendChild(a)},2500)};
+  $("er").onclick=()=>after("The tape is full. There is nothing left to record over.");$("kp").onclick=()=>after("He presses record. He starts the way he always does.")}
+const HINTS=["The sleeve talks about numbers you already found. Move the counter to them with fast-forward and rewind (hold the buttons).","I: 140 (the padlock). II: 424 (the breath). III: 941 (the night room, first three of its code). Stop within 5 of each, then press play.","Tracking: about 30 for the first, 71 for the second, 52 for the third. The picture clears when it is right, and drifts a little, so keep adjusting."];
+let hl=0;$("hnb").onclick=()=>{if(!booted)return;cap(HINTS[hl]);bump("nlh");hl=Math.min(2,hl+1);$("hnb").textContent="hint "+hl+"/3"};
+</script>
+<script>
+/* DEV SKIP (delete this whole block before sharing if you want): on a PC keyboard, type the code outside any text field to jump to the next page. */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;           // phones and tablets: never
+  const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
+                 "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html",
+                 "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html",
+                 "puzzle10.html": "puzzle11.html", "puzzle11.html": "puzzle12.html",
+                 "puzzle12.html": "puzzle13.html" };   // add "puzzle13.html": "puzzle14.html" when it exists
+  const CODE = atob("Z2FiYnk="); let buf = "";
+  addEventListener("keydown", e => {
+    if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName)) return;               // typing a name or a command never triggers it
+    buf = (buf + e.key.toLowerCase()).slice(-CODE.length);
+    if (buf !== CODE) return; buf = "";
+    const nxt = NEXT[location.pathname.split("/").pop() || "index.html"]; if (!nxt) return;
+    try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
+    document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
+  });
+})();
+</script>
+<script>
+/* EXTRAS: remembers how far you got, and a sound switch (also stops the loud scare) */
+(() => {
+  const f = location.pathname.split("/").pop() || "index.html", m = f.match(/puzzle(\d+)\.html/), n = m ? +m[1] : 1;
+  try { if (n > (+localStorage.getItem("nlmax") || 0)) localStorage.setItem("nlmax", n); } catch (e) {}
+  window.__muted = false;
+  const Orig = window.AudioContext;
+  if (Orig) {
+    window.AudioContext = class extends Orig { constructor(...a) { super(...a); if (window.__muted) { try { this.suspend(); } catch (e) {} } } };
+    const R = Orig.prototype.resume; Orig.prototype.resume = function () { return window.__muted ? Promise.resolve() : R.call(this); };
+  }
+  const b = document.createElement("button");
+  b.textContent = "sound: on"; b.setAttribute("aria-label", "toggle sound");
+  b.style.cssText = "all:unset;cursor:pointer;position:fixed;left:.6rem;bottom:.6rem;z-index:99;color:#777;font:12px 'Courier New',monospace;padding:.3rem .5rem;border:1px solid #222;background:rgba(0,0,0,.6)";
+  b.addEventListener("click", e => {
+    e.stopPropagation(); window.__muted = !window.__muted; b.textContent = "sound: " + (window.__muted ? "off" : "on");
+    try { if (typeof ac !== "undefined" && ac) { window.__muted ? ac.suspend() : ac.resume(); } } catch (x) {}
+    document.querySelectorAll("audio,video").forEach(v => v.muted = window.__muted);
+  });
+  document.body.appendChild(b);
+  if (n === 1) {                                         // title screen: offer to continue where she stopped
+    const mx = +localStorage.getItem("nlmax") || 1, t = document.getElementById("title");
+    if (mx > 1 && t) {
+      const d = document.createElement("div");
+      d.style.cssText = "margin-top:2.2rem;color:#777;font-size:.9rem;text-align:center;opacity:0;animation:show 2s 6s forwards";
+      d.innerHTML = '<a href="puzzle' + mx + '.html" style="color:#bbb">continue from puzzle ' + mx + '</a> &nbsp;&middot;&nbsp; <a href="#" id="rst" style="color:#777">start over</a>';
+      d.addEventListener("click", e => e.stopPropagation());
+      t.appendChild(d);
+      d.querySelector("#rst").addEventListener("click", e => { e.preventDefault(); try { localStorage.clear(); } catch (x) {} location.reload(); });
+    }
+  }
+})();
+</script>
+</body></html>

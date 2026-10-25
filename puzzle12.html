@@ -22,18 +22,20 @@ body.hit{animation:hit .5s steps(2,end)}@keyframes hit{0%,100%{background:#000}3
 [hidden]{display:none!important}
 
 #stage{position:relative;width:100%;aspect-ratio:16/10;background:#040404;overflow:hidden;touch-action:none;border:1px solid #111;user-select:none;-webkit-user-select:none}
-#room,#spots{position:absolute;inset:0}#cv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}#spots{z-index:4}#spots button{position:absolute;width:64px;height:84px;transform:translate(-50%,-50%)}
+#room,#spots,#wps{position:absolute;inset:0}#cv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}#wps{z-index:3;display:none;pointer-events:none}#spots{z-index:4}#spots button{position:absolute;width:64px;height:84px;transform:translate(-50%,-50%)}
 .c{position:absolute;width:14px;height:34px;transform:translate(-50%,-50%);background:#262626;border:1px solid #666}
 .c .fl{position:absolute;left:50%;top:-18px;width:9px;height:18px;margin-left:-4.5px;border-radius:50% 50% 40% 40%;background:radial-gradient(#fff,#ffb347 60%,transparent);opacity:0;transition:opacity .3s}
 .c.lit .fl{opacity:1;animation:fk .35s ease-in-out infinite alternate}@keyframes fk{to{transform:scaleY(.85)}}
 .c .lbl{position:absolute;top:44px;left:50%;transform:translateX(-50%);color:#bbb;font-size:.8rem;white-space:nowrap}
+.wp{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border:1px dashed #444;border-radius:50%;color:#666;text-align:center;line-height:30px;font-size:.8rem}
+.wp.cur{border-color:#bbb;color:#fff}.wp.done{border-style:solid;border-color:#7a5a2a;color:#7a5a2a}
 #eyes{position:absolute;z-index:3;width:46px;height:12px;opacity:0;pointer-events:none;background:radial-gradient(circle at 20% 50%,#fff 0 4px,transparent 5px),radial-gradient(circle at 80% 50%,#fff 0 4px,transparent 5px);transition:opacity .15s}
 #dist{letter-spacing:.2em;color:#cfcfcf}
 #ent{position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;background:radial-gradient(circle at 50% 35%,#1c0000,#000 72%);overflow:hidden}
 #ent i{position:relative;width:min(74vw,440px);height:min(96vh,900px);background:#000;border-radius:50% 50% 8px 8px/20% 20% 0 0;box-shadow:0 0 90px 40px #000,0 0 0 1px #2a0a0a}
 #ent i::before{content:"";position:absolute;left:30%;top:13%;width:40%;height:7%;background:radial-gradient(ellipse at 18% 50%,#fff 0 9px,transparent 10px),radial-gradient(ellipse at 82% 50%,#fff 0 9px,transparent 10px)}
 #blk{position:fixed;inset:0;z-index:90;background:#000;display:none}
-#vw{position:fixed;inset:0;z-index:100;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column}#vid{max-width:100%;max-height:90vh}
+#vw{position:fixed;inset:0;z-index:100;background:#000;display:flex;align-items:center;justify-content:center;padding:1.4rem;box-sizing:border-box}
 </style></head><body><noscript><p style="padding:2rem">This needs JavaScript to run.</p></noscript>
 <canvas id="noise" width="96" height="96"></canvas><div id="vig"></div>
 <div id="wake"><div><p class="a">tap to begin</p><p class="b">This page ends with a loud, sudden scare, strong vibration and heavy screen shake.<br>Not for people with photosensitive epilepsy, heart conditions or sound sensitivity.<br>Lower your volume first.<br><br><span class="go" id="full">full effects</span> &nbsp;&nbsp;&nbsp; <span class="go">reduced effects</span></p></div></div>
@@ -41,12 +43,12 @@ body.hit{animation:hit .5s steps(2,end)}@keyframes hit{0%,100%{background:#000}3
 
 <main class="wrap">
   <div class="hud"><span>XII &middot; THE LIGHT</span><span id="dist"></span><button id="hnb" class="hbtn">hint</button><button id="memb" class="hbtn">memories</button></div>
-  <p id="cap">Light the four candles in the order he cut her off.</p>
-  <div id="stage"><div id="room"></div><canvas id="cv"></canvas><div id="eyes"></div><div id="spots"></div></div>
+  <p id="cap">Light the four candles in the order he cut her off. Two of the candles are lies.</p>
+  <div id="stage"><div id="room"></div><canvas id="cv"></canvas><div id="wps"></div><div id="eyes"></div><div id="spots"></div></div>
   <p id="msg" role="status"></p>
 </main>
 <div id="ent"><i></i></div><div id="blk"></div>
-<div id="vw" hidden><video id="vid" src="videoplayback.mp4" playsinline preload="auto"></video><span id="vplay" class="go" hidden>tap to play</span><span id="vend" class="go" hidden>continue</span></div>
+<div id="vw" hidden><div class="card" id="vc"></div></div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -77,36 +79,48 @@ $("wake").addEventListener("click",boot);
 document.body.style.opacity=0;setTimeout(()=>document.body.style.opacity=1,50);
 
 let SAFE=true;$("full").addEventListener("click",()=>{SAFE=false});
-const ORDER=["friends","doctor","family","work"],POS={friends:[.12,.5],doctor:[.5,.16],family:[.88,.5],work:[.5,.84]};
-let k=0,d=5,busy=false,px=-999,py=-999,amb,sOut,sNodes=[],candles={},lit={};
-const stage=$("stage"),cv=$("cv"),ctx=cv.getContext("2d");
+const C6=[["friends",.12,.5],["sleep",.28,.2],["doctor",.5,.14],["him",.72,.2],["family",.88,.5],["work",.5,.84]],ORDER=["friends","doctor","family","work"],WP=[[.15,.78],[.3,.42],[.5,.62],[.7,.3],[.85,.72]];
+let st=1,k=0,d=5,busy=false,px=-999,py=-999,ppx=-999,ppy=-999,amb,sOut,sNodes=[],candles={},lit={},pos={},wpI=0,wpHold=0,eyeOpen=false,eyeT=0,eyeNext=3.5,eyeDur=2.5,warned=false,cd=0,blackout=false;
+const stage=$("stage"),cv=$("cv"),ctx=cv.getContext("2d"),eyes=$("eyes");
 const rs=()=>{cv.width=stage.clientWidth;cv.height=stage.clientHeight};addEventListener("resize",rs);
-ORDER.forEach(id=>{const c=document.createElement("div");c.className="c";c.style.left=POS[id][0]*100+"%";c.style.top=POS[id][1]*100+"%";c.innerHTML='<div class="fl"></div><div class="lbl">'+id+"</div>";$("room").appendChild(c);candles[id]=c;
-  const b=document.createElement("button");b.style.left=POS[id][0]*100+"%";b.style.top=POS[id][1]*100+"%";b.setAttribute("aria-label",id);b.addEventListener("click",()=>light(id));$("spots").appendChild(b)});
+C6.forEach(([id,x,y])=>{pos[id]=[x,y];const c=document.createElement("div");c.className="c";c.style.left=x*100+"%";c.style.top=y*100+"%";c.innerHTML='<div class="fl"></div><div class="lbl">'+id+"</div>";$("room").appendChild(c);candles[id]=c;
+  const b=document.createElement("button");b.style.left=x*100+"%";b.style.top=y*100+"%";b.setAttribute("aria-label",id);b.addEventListener("click",()=>light(id));$("spots").appendChild(b)});
+WP.forEach(([x,y],i)=>{const e=document.createElement("div");e.className="wp";e.textContent=i+1;e.style.left=x*100+"%";e.style.top=y*100+"%";$("wps").appendChild(e)});
+const markWp=()=>document.querySelectorAll(".wp").forEach((e,i)=>e.className="wp"+(i<wpI?" done":i===wpI?" cur":""));
 const aim=e=>{const r=stage.getBoundingClientRect();px=e.clientX-r.left;py=e.clientY-r.top-(e.pointerType==="touch"?44:0)};
 stage.addEventListener("pointerdown",aim);stage.addEventListener("pointermove",aim);stage.addEventListener("pointerleave",()=>px=-999);
 const dots=()=>$("dist").textContent="it: "+"\u25CF".repeat(Math.max(0,d))+"\u25CB".repeat(Math.max(0,5-d));
 function breath(v){const len=ac.sampleRate*1.1,b=ac.createBuffer(1,len,ac.sampleRate),dd=b.getChannelData(0);for(let i=0;i<len;i++)dd[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/len);const s=ac.createBufferSource();s.buffer=b;const f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=700;f.Q.value=.8;const g=ac.createGain();g.gain.value=v;s.connect(f);f.connect(g);g.connect(ac.destination);s.start()}
-function snuff(){k=0;ORDER.forEach(id=>{lit[id]=false;candles[id].classList.remove("lit")})}
+function showEyes(on){if(on){eyes.style.left="43%";eyes.style.top="5%";eyes.style.transform="scale(3.2)";eyes.style.opacity=1}else{eyes.style.opacity=0;eyes.style.transform=""}}
+/* stage 1: the candles. four are true, two are lies. */
+function snuff(){k=0;Object.keys(candles).forEach(id=>{lit[id]=false;candles[id].classList.remove("lit")})}
 function caught(){bump("nl12");jolt();stat=1;d=5;snuff();dots();say("It reached you. The room forgets.",3000)}
-function light(id){if(!booted||busy)return;
-  if(id===ORDER[k]){lit[id]=true;candles[id].classList.add("lit");k++;d=Math.min(5,d+1);dots();tone("sine",440+k*110,440+k*110,.07,1.2);if(k===4)finale()}
-  else{bump("nl12");jolt();snuff();d--;dots();say("Not that one.");if(d<=0)caught()}}
+function light(id){if(!booted||busy||st!==1)return;
+  if(id===ORDER[k]){lit[id]=true;candles[id].classList.add("lit");k++;d=Math.min(5,d+1);dots();tone("sine",440+k*110,440+k*110,.07,1.2);if(k===4)toB()}
+  else{bump("nl12");jolt();snuff();d--;dots();say(id==="sleep"||id==="him"?"That one was a lie.":"Not that one.");if(d<=0)caught()}}
+/* stage 2: it watches. follow the numbers; when its eyes open, do not move. */
+async function toB(){busy=true;cap("Good. Now it is watching.");await sleep(1800);snuff();Object.values(candles).forEach(c=>c.style.display="none");
+  $("wps").style.display="block";st=2;d=5;dots();wpI=0;wpHold=0;eyeOpen=false;eyeT=0;eyeNext=3.5;markWp();cap("Follow the numbers with your light. When its eyes open, do not move.");busy=false}
+function strike(){if(cd>0)return;cd=1.2;bump("nl12");jolt();d--;dots();wpI=0;wpHold=0;markWp();say("It saw you move.",1600);if(d<=0){busy=true;say("It reached you. The numbers start again.",3000);d=5;dots();setTimeout(()=>busy=false,1200)}}
 function start(){rs();dots();amb=loop(mkBuf(true),"lowpass",140,.5,.2);
   setInterval(()=>{if(!busy)breath(.05+.25*(5-d)/5)},2600);
-  setInterval(()=>{if(!busy&&k<4){d--;dots();if(d<=0)caught()}},16000);
-  setInterval(()=>{if(busy||d>3||Math.random()<.5)return;const e=$("eyes");e.style.left=(8+Math.random()*80)+"%";e.style.top=(8+Math.random()*80)+"%";e.style.opacity=.9;setTimeout(()=>e.style.opacity=0,260)},4000);
-  setTimeout(()=>{if(k===0&&!busy)cap("The memories say which cut came first.")},50000);
+  setInterval(()=>{if(!busy&&st===1&&k<4){d--;dots();if(d<=0)caught()}},14000);
+  setInterval(()=>{if(busy||st!==1||d>3||Math.random()<.5)return;eyes.style.transform="";eyes.style.left=(8+Math.random()*80)+"%";eyes.style.top=(8+Math.random()*80)+"%";eyes.style.opacity=.9;setTimeout(()=>eyes.style.opacity=0,260)},4000);
+  setTimeout(()=>{if(k===0&&!busy&&st===1)cap("The memories say which cut came first.")},50000);
   requestAnimationFrame(frame)}
 function hole(x,y,r){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,"rgba(0,0,0,1)");g.addColorStop(.5,"rgba(0,0,0,.6)");g.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()}
-function frame(now){const t=now/1000,w=cv.width,h=cv.height;
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000,w=cv.width,h=cv.height;
   ctx.globalCompositeOperation="source-over";ctx.fillStyle="rgba(0,0,0,.985)";ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation="destination-out";
-  if(px>-100)hole(px,py,Math.max(60,w*.15)*(1+Math.sin(t*5)*.05));
-  ORDER.forEach(id=>{if(lit[id])hole(POS[id][0]*w,POS[id][1]*h,w*.2*(1+Math.sin(t*7+POS[id][0]*9)*.05))});
-  $("vig").style.opacity=Math.min(.9,.5+(5-d)*.07);requestAnimationFrame(frame)}
-async function finale(){busy=true;cap("");$("dist").textContent="";if(amb)amb.gain.setTargetAtTime(0,ac.currentTime,.4);await sleep(1800);
-  for(const id of ORDER){lit[id]=false;candles[id].classList.remove("lit");tone("sine",220,60,.07,.25);await sleep(800)}
-  await sleep(1600);scare()}
+  if(px>-100&&!blackout)hole(px,py,Math.max(60,w*.15)*(1+Math.sin(t*5)*.05));
+  Object.keys(lit).forEach(id=>{if(lit[id])hole(pos[id][0]*w,pos[id][1]*h,w*.2*(1+Math.sin(t*7+pos[id][0]*9)*.05))});
+  if(st===2&&!busy){eyeT+=dt;cd=Math.max(0,cd-dt);
+    if(!eyeOpen){if(!warned&&eyeT>eyeNext-.9){warned=true;breath(.3)}if(eyeT>eyeNext){eyeOpen=true;eyeT=0;eyeDur=2.2+Math.random()*1.3;showEyes(true);cap("Do not move.")}}
+    else if(eyeT>eyeDur){eyeOpen=false;eyeT=0;eyeNext=3+Math.random()*2.5;warned=false;showEyes(false);cap("Follow the numbers with your light.")}
+    if(eyeOpen&&px>-100&&ppx>-100&&Math.hypot(px-ppx,py-ppy)/dt>70)strike();
+    if(px>-100&&wpI<5){const tg=WP[wpI];if(Math.hypot(px-tg[0]*w,py-tg[1]*h)<Math.max(26,w*.04)){wpHold+=dt;if(wpHold>.45){wpI++;wpHold=0;tone("sine",330+wpI*70,330+wpI*70,.07,1);markWp();if(wpI>=5)finale()}}else wpHold=Math.max(0,wpHold-dt)}}
+  ppx=px;ppy=py;$("vig").style.opacity=Math.min(.9,.5+(5-d)*.07+(eyeOpen?.15:0));requestAnimationFrame(frame)}
+/* stage 3: the end of the light. */
+async function finale(){busy=true;cap("");$("dist").textContent="";$("wps").style.display="none";showEyes(false);if(amb)amb.gain.setTargetAtTime(0,ac.currentTime,.4);blackout=true;await sleep(2600);tone("sine",60,30,.3,.6);await sleep(1400);scare()}
 function scareAudio(safe){const comp=ac.createDynamicsCompressor();comp.threshold.value=-22;comp.knee.value=0;comp.ratio.value=20;comp.attack.value=.002;comp.release.value=.12;
   const out=ac.createGain();out.gain.value=0;comp.connect(out);out.connect(ac.destination);let pre=comp;
   if(!safe){const ws=ac.createWaveShaper(),c=new Float32Array(512);for(let i=0;i<512;i++)c[i]=Math.tanh((i/256-1)*28);ws.curve=c;ws.connect(comp);pre=ws}
@@ -115,16 +129,18 @@ function scareAudio(safe){const comp=ac.createDynamicsCompressor();comp.threshol
   [55,82.4,110].forEach((f,i)=>{const o=ac.createOscillator();o.type=i?"sawtooth":"square";o.frequency.value=f;const g=ac.createGain();g.gain.value=.5;o.connect(g);g.connect(mix);o.start();sNodes.push(o)});
   const sc=ac.createOscillator();sc.type="sawtooth";sc.frequency.setValueAtTime(900,ac.currentTime);sc.frequency.linearRampToValueAtTime(3400,ac.currentTime+5);const sg=ac.createGain();sg.gain.value=.25;sc.connect(sg);sg.connect(mix);sc.start();sNodes.push(sc);
   out.gain.linearRampToValueAtTime(safe?.18:.5,ac.currentTime+.12);sOut=out}
-function playVideo(){$("blk").style.display="none";$("vw").hidden=false;const v=$("vid");v.volume=1;v.onended=()=>{$("vend").hidden=false};
-  v.play().catch(()=>{$("vplay").hidden=false;$("vplay").onclick=()=>{$("vplay").hidden=true;v.play()}});$("vend").onclick=()=>{try{localStorage.setItem("nlp12","1")}catch(e){}leave("puzzle13.html")}}
+async function aftermath(){$("blk").style.display="none";const w=$("vw"),c=$("vc");w.hidden=false;
+  const L=["That was not a monster.","That was every apology he never made, with no light left to say it in.","He did not want forgiveness. He wanted you to keep looking."];
+  for(const l of L){const p=document.createElement("p");p.textContent=l;p.style.cssText="opacity:0;transition:opacity 2s;margin:1rem 0";c.appendChild(p);void p.offsetWidth;p.style.opacity=1;tone("sine",110,110,.04,2.5);await sleep(3600)}
+  const a=document.createElement("span");a.className="go";a.textContent="continue";a.onclick=()=>{try{localStorage.setItem("nlp12","1")}catch(e){}leave("puzzle13.html")};c.appendChild(a)}
 async function scare(){const safe=SAFE||calm,t0=performance.now();$("ent").style.display="flex";scareAudio(safe);
   try{if(!safe&&navigator.vibrate)navigator.vibrate(Array(20).fill([180,60]).flat())}catch(e){}      // 5 seconds, strong, no flashing
   (function loop(){const t=(performance.now()-t0)/1000;if(t>5)return;const a=safe?3:24*Math.min(1,t*3),s=1+Math.min(t,5)*(safe?.01:.05);
     $("ent").style.transform=`translate(${(Math.sin(t*37)*.6+Math.sin(t*61)*.4)*a}px,${(Math.sin(t*43)*.6+Math.sin(t*29)*.4)*a}px) rotate(${Math.sin(t*23)*(safe?.1:1.4)}deg) scale(${s})`;requestAnimationFrame(loop)})();
   await sleep(5000);
   if(sOut)sOut.gain.setTargetAtTime(0,ac.currentTime,.08);setTimeout(()=>sNodes.forEach(n=>{try{n.stop()}catch(e){}}),600);try{navigator.vibrate&&navigator.vibrate(0)}catch(e){}
-  $("ent").style.display="none";$("blk").style.display="block";await sleep(1400);playVideo()}
-const HINTS=["The memories say which cut came first.", "It is the same order as the bath: friends, doctor, family, work.", "Left, top, right, bottom. The candle names only show inside your light."];let hl=0;
+  $("ent").style.display="none";$("blk").style.display="block";await sleep(1400);aftermath()}
+const HINTS=["Candle names only show inside your light. Two of the candles are lies.", "Same order as the bath: friends, doctor, family, work. Skip sleep and him. Then follow the numbers, and freeze when the eyes open.", "Candles: left, top, right, bottom. Then touch 1 to 5 with your light. When the eyes open do not move (or lift your finger)."];let hl=0;
 $("hnb").onclick=()=>{if(!booted)return;cap(HINTS[hl]);bump("nlh");hl=Math.min(2,hl+1);$("hnb").textContent="hint "+hl+"/3"};
 </script>
 <script>
@@ -134,7 +150,8 @@ $("hnb").onclick=()=>{if(!booted)return;cap(HINTS[hl]);bump("nlh");hl=Math.min(2
   const NEXT = { "index.html": "puzzle2.html", "puzzle2.html": "puzzle3.html", "puzzle3.html": "puzzle4.html",
                  "puzzle4.html": "puzzle5.html", "puzzle5.html": "puzzle6.html", "puzzle6.html": "puzzle7.html",
                  "puzzle7.html": "puzzle8.html", "puzzle8.html": "puzzle9.html", "puzzle9.html": "puzzle10.html",
-                 "puzzle10.html": "puzzle11.html", "puzzle11.html": "puzzle12.html" };   // add "puzzle12.html": "puzzle13.html" when it exists
+                 "puzzle10.html": "puzzle11.html", "puzzle11.html": "puzzle12.html",
+                 "puzzle12.html": "puzzle13.html" };   // add "puzzle13.html": "puzzle14.html" when it exists
   const CODE = atob("Z2FiYnk="); let buf = "";
   addEventListener("keydown", e => {
     if (!e.isTrusted || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
@@ -145,6 +162,39 @@ $("hnb").onclick=()=>{if(!booted)return;cap(HINTS[hl]);bump("nlh");hl=Math.min(2
     try { localStorage.setItem("nlcarry", "1"); if (!localStorage.getItem("nlstart")) localStorage.setItem("nlstart", Date.now()); if (!localStorage.getItem("nlname")) localStorage.setItem("nlname", "you"); } catch (x) {}
     document.body.style.transition = "opacity .4s"; document.body.style.opacity = 0; setTimeout(() => location.href = nxt, 400);
   });
+})();
+</script>
+<script>
+/* EXTRAS: remembers how far you got, and a sound switch (also stops the loud scare) */
+(() => {
+  const f = location.pathname.split("/").pop() || "index.html", m = f.match(/puzzle(\d+)\.html/), n = m ? +m[1] : 1;
+  try { if (n > (+localStorage.getItem("nlmax") || 0)) localStorage.setItem("nlmax", n); } catch (e) {}
+  window.__muted = false;
+  const Orig = window.AudioContext;
+  if (Orig) {
+    window.AudioContext = class extends Orig { constructor(...a) { super(...a); if (window.__muted) { try { this.suspend(); } catch (e) {} } } };
+    const R = Orig.prototype.resume; Orig.prototype.resume = function () { return window.__muted ? Promise.resolve() : R.call(this); };
+  }
+  const b = document.createElement("button");
+  b.textContent = "sound: on"; b.setAttribute("aria-label", "toggle sound");
+  b.style.cssText = "all:unset;cursor:pointer;position:fixed;left:.6rem;bottom:.6rem;z-index:99;color:#777;font:12px 'Courier New',monospace;padding:.3rem .5rem;border:1px solid #222;background:rgba(0,0,0,.6)";
+  b.addEventListener("click", e => {
+    e.stopPropagation(); window.__muted = !window.__muted; b.textContent = "sound: " + (window.__muted ? "off" : "on");
+    try { if (typeof ac !== "undefined" && ac) { window.__muted ? ac.suspend() : ac.resume(); } } catch (x) {}
+    document.querySelectorAll("audio,video").forEach(v => v.muted = window.__muted);
+  });
+  document.body.appendChild(b);
+  if (n === 1) {                                         // title screen: offer to continue where she stopped
+    const mx = +localStorage.getItem("nlmax") || 1, t = document.getElementById("title");
+    if (mx > 1 && t) {
+      const d = document.createElement("div");
+      d.style.cssText = "margin-top:2.2rem;color:#777;font-size:.9rem;text-align:center;opacity:0;animation:show 2s 6s forwards";
+      d.innerHTML = '<a href="puzzle' + mx + '.html" style="color:#bbb">continue from puzzle ' + mx + '</a> &nbsp;&middot;&nbsp; <a href="#" id="rst" style="color:#777">start over</a>';
+      d.addEventListener("click", e => e.stopPropagation());
+      t.appendChild(d);
+      d.querySelector("#rst").addEventListener("click", e => { e.preventDefault(); try { localStorage.clear(); } catch (x) {} location.reload(); });
+    }
+  }
 })();
 </script>
 </body></html>
